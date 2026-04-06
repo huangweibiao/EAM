@@ -50,6 +50,84 @@
             <el-icon><FolderOpened /></el-icon>
             <span>资产分类</span>
           </el-menu-item>
+          <el-menu-item index="/asset/transfer">
+            <el-icon><Switch /></el-icon>
+            <span>资产调拨</span>
+          </el-menu-item>
+          <el-menu-item index="/asset/inventory">
+            <el-icon><Search /></el-icon>
+            <span>资产盘点</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="maintenance">
+          <template #title>
+            <el-icon><Tools /></el-icon>
+            <span>设备维护</span>
+          </template>
+          <el-menu-item index="/maintenance/plan">
+            <el-icon><Calendar /></el-icon>
+            <span>维护计划</span>
+          </el-menu-item>
+          <el-menu-item index="/maintenance/record">
+            <el-icon><Document /></el-icon>
+            <span>维护记录</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="workorder">
+          <template #title>
+            <el-icon><Tickets /></el-icon>
+            <span>工单管理</span>
+          </template>
+          <el-menu-item index="/workorder/list">
+            <el-icon><List /></el-icon>
+            <span>工单列表</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="spare">
+          <template #title>
+            <el-icon><Box /></el-icon>
+            <span>备件库存</span>
+          </template>
+          <el-menu-item index="/spare/part">
+            <el-icon><Goods /></el-icon>
+            <span>备件列表</span>
+          </el-menu-item>
+          <el-menu-item index="/spare/inbound">
+            <el-icon><BottomLeft /></el-icon>
+            <span>入库记录</span>
+          </el-menu-item>
+          <el-menu-item index="/spare/outbound">
+            <el-icon><BottomRight /></el-icon>
+            <span>出库记录</span>
+          </el-menu-item>
+          <el-menu-item index="/spare/warning">
+            <el-icon><Warning /></el-icon>
+            <span>库存预警</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="purchase">
+          <template #title>
+            <el-icon><ShoppingCart /></el-icon>
+            <span>采购管理</span>
+          </template>
+          <el-menu-item index="/purchase/request">
+            <el-icon><DocumentAdd /></el-icon>
+            <span>采购申请</span>
+          </el-menu-item>
+          <el-menu-item index="/purchase/order">
+            <el-icon><Tickets /></el-icon>
+            <span>采购订单</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="report">
+          <template #title>
+            <el-icon><DataAnalysis /></el-icon>
+            <span>报表分析</span>
+          </template>
+          <el-menu-item index="/report/dashboard">
+            <el-icon><DataLine /></el-icon>
+            <span>数据看板</span>
+          </el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -88,6 +166,12 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import {
+  Odometer, Setting, User, UserFilled, Menu, OfficeBuilding,
+  Box, List, FolderOpened, Switch, Search, Tools, Calendar,
+  Document, Tickets, Goods, BottomLeft, BottomRight, Warning,
+  ShoppingCart, DocumentAdd, DataAnalysis, DataLine
+} from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()

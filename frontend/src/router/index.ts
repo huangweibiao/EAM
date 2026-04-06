@@ -67,6 +67,113 @@ const routes: Array<RouteRecordRaw> = [
             name: 'AssetCategory',
             component: () => import('@/views/asset/Category.vue'),
             meta: { title: '资产分类', requiresAuth: true }
+          },
+          {
+            path: 'transfer',
+            name: 'AssetTransfer',
+            component: () => import('@/views/asset/Transfer.vue'),
+            meta: { title: '资产调拨', requiresAuth: true }
+          },
+          {
+            path: 'inventory',
+            name: 'AssetInventory',
+            component: () => import('@/views/asset/Inventory.vue'),
+            meta: { title: '资产盘点', requiresAuth: true }
+          }
+        ]
+      },
+      {
+        path: 'maintenance',
+        name: 'Maintenance',
+        meta: { title: '设备维护', requiresAuth: true },
+        children: [
+          {
+            path: 'plan',
+            name: 'MaintenancePlan',
+            component: () => import('@/views/maintenance/Plan.vue'),
+            meta: { title: '维护计划', requiresAuth: true }
+          },
+          {
+            path: 'record',
+            name: 'MaintenanceRecord',
+            component: () => import('@/views/maintenance/Record.vue'),
+            meta: { title: '维护记录', requiresAuth: true }
+          }
+        ]
+      },
+      {
+        path: 'workorder',
+        name: 'WorkOrder',
+        meta: { title: '工单管理', requiresAuth: true },
+        children: [
+          {
+            path: 'list',
+            name: 'WorkOrderList',
+            component: () => import('@/views/workorder/WorkOrder.vue'),
+            meta: { title: '工单列表', requiresAuth: true }
+          }
+        ]
+      },
+      {
+        path: 'spare',
+        name: 'Spare',
+        meta: { title: '备件库存', requiresAuth: true },
+        children: [
+          {
+            path: 'part',
+            name: 'SparePart',
+            component: () => import('@/views/spare/Part.vue'),
+            meta: { title: '备件列表', requiresAuth: true }
+          },
+          {
+            path: 'inbound',
+            name: 'PartInbound',
+            component: () => import('@/views/spare/Inbound.vue'),
+            meta: { title: '入库记录', requiresAuth: true }
+          },
+          {
+            path: 'outbound',
+            name: 'PartOutbound',
+            component: () => import('@/views/spare/Outbound.vue'),
+            meta: { title: '出库记录', requiresAuth: true }
+          },
+          {
+            path: 'warning',
+            name: 'InventoryWarning',
+            component: () => import('@/views/spare/Warning.vue'),
+            meta: { title: '库存预警', requiresAuth: true }
+          }
+        ]
+      },
+      {
+        path: 'purchase',
+        name: 'Purchase',
+        meta: { title: '采购管理', requiresAuth: true },
+        children: [
+          {
+            path: 'request',
+            name: 'PurchaseRequest',
+            component: () => import('@/views/purchase/Request.vue'),
+            meta: { title: '采购申请', requiresAuth: true }
+          },
+          {
+            path: 'order',
+            name: 'PurchaseOrder',
+            component: () => import('@/views/purchase/Order.vue'),
+            meta: { title: '采购订单', requiresAuth: true }
+          }
+        ]
+      },
+      {
+        path: 'report',
+        name: 'Report',
+        meta: { title: '报表分析', requiresAuth: true },
+        children: [
+          {
+            path: 'dashboard',
+            name: 'ReportDashboard',
+            component: () => import('@/views/report/Dashboard.vue'),
+            meta: { title: '数据看板', requiresAuth: true }
           }
         ]
       }
