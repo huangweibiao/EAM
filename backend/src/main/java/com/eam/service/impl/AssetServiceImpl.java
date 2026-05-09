@@ -57,6 +57,11 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
         if (count > 0) {
             throw new BusinessException("资产编码已存在");
         }
+        // 校验资产净值不能大于购买原值
+        if (asset.getCurrentValue() != null && asset.getPurchasePrice() != null
+                && asset.getCurrentValue().compareTo(asset.getPurchasePrice()) > 0) {
+            throw new BusinessException("资产净值不能大于购买原值");
+        }
         if (asset.getStatus() == null) {
             asset.setStatus("NEW");
         }
@@ -68,6 +73,11 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
     public Asset update(Asset asset) {
         if (asset.getId() == null) {
             throw new BusinessException("资产ID不能为空");
+        }
+        // 校验资产净值不能大于购买原值
+        if (asset.getCurrentValue() != null && asset.getPurchasePrice() != null
+                && asset.getCurrentValue().compareTo(asset.getPurchasePrice()) > 0) {
+            throw new BusinessException("资产净值不能大于购买原值");
         }
         this.updateById(asset);
         return asset;
@@ -138,5 +148,16 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
     public boolean transfer(Long assetId, Long toDeptId, Long toUserId, String reason, String operator) {
         // 资产调拨需要审批，这里简化处理直接变更
         return change(assetId, "DEPT", String.valueOf(toDeptId), reason, operator);
+    }
+
+    @Override
+    public boolean updateMaintenanceDates(Long assetId, java.time.LocalDate lastMaintenanceDate, java.time.LocalDate nextMaintenanceDate) {
+        Asset asset = this.getById(assetId);
+        if (asset == null) {
+            throw new BusinessException("资产不存在");
+        }
+        asset.setLastMaintenanceDate(lastMaintenanceDate);
+        asset.setNextMaintenanceDate(nextMaintenanceDate);
+        return this.updateById(asset);
     }
 }

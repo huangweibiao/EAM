@@ -22,7 +22,6 @@ EAM企业资产管理系统已成功初始化！
   - MyBatis 3.0.3
   - MySQL Connector
   - JWT支持
-  - Hutool工具类
 - [x] 创建应用主类（EamApplication.java）
 - [x] 配置application.yml
   - 数据库配置

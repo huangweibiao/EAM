@@ -6,7 +6,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
 import com.eam.entity.Asset;
+import com.eam.entity.AssetChangeLog;
 import com.eam.entity.AssetTransfer;
+import com.eam.mapper.AssetChangeLogMapper;
 import com.eam.mapper.AssetTransferMapper;
 import com.eam.service.IAssetTransferService;
 import com.eam.service.IAssetService;
@@ -25,6 +27,9 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
 
     @Autowired
     private IAssetService assetService;
+
+    @Autowired
+    private AssetChangeLogMapper changeLogMapper;
 
     @Override
     public IPage<AssetTransfer> page(Long pageNum, Long pageSize, String status) {
@@ -92,9 +97,45 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
             throw new BusinessException("只有已审批的调拨单可以完成");
         }
 
-        // 更新资产信息
-        assetService.change(transfer.getAssetId(), "DEPT", String.valueOf(transfer.getToDeptId()),
-                "调拨完成", transfer.getOperator());
+        // 获取资产原信息
+        Asset asset = assetService.getById(transfer.getAssetId());
+        if (asset == null) {
+            throw new BusinessException("资产不存在");
+        }
+
+        Long oldDeptId = asset.getDeptId();
+        Long oldUserId = asset.getUserId();
+
+        // 更新资产信息（部门和使用人）
+        asset.setDeptId(transfer.getToDeptId());
+        if (transfer.getToUserId() != null) {
+            asset.setUserId(transfer.getToUserId());
+        }
+        assetService.updateById(asset);
+
+        // 生成资产变动记录 - 部门变动
+        AssetChangeLog deptLog = new AssetChangeLog();
+        deptLog.setAssetId(transfer.getAssetId());
+        deptLog.setChangeType("DEPT");
+        deptLog.setOldValue(String.valueOf(oldDeptId));
+        deptLog.setNewValue(String.valueOf(transfer.getToDeptId()));
+        deptLog.setReason("资产调拨: " + transfer.getTransferReason());
+        deptLog.setChangeTime(LocalDateTime.now());
+        deptLog.setOperator(transfer.getOperator());
+        changeLogMapper.insert(deptLog);
+
+        // 如果使用人也变更了，生成使用人变动记录
+        if (transfer.getToUserId() != null && !transfer.getToUserId().equals(oldUserId)) {
+            AssetChangeLog userLog = new AssetChangeLog();
+            userLog.setAssetId(transfer.getAssetId());
+            userLog.setChangeType("USER");
+            userLog.setOldValue(String.valueOf(oldUserId));
+            userLog.setNewValue(String.valueOf(transfer.getToUserId()));
+            userLog.setReason("资产调拨: " + transfer.getTransferReason());
+            userLog.setChangeTime(LocalDateTime.now());
+            userLog.setOperator(transfer.getOperator());
+            changeLogMapper.insert(userLog);
+        }
 
         transfer.setStatus("COMPLETED");
         this.updateById(transfer);

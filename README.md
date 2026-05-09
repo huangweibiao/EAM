@@ -15,7 +15,6 @@ EAM企业资产管理系统是一个基于Spring Boot 3.5.11 + MySQL 8 + Vue 3 +
 - MyBatis 3.0.3
 - MySQL 8
 - JWT (io.jsonwebtoken)
-- Hutool 5.8.24
 
 ### 前端
 - Vue 3.4.0

@@ -30,4 +30,13 @@ public interface IAssetService extends IService<Asset> {
      * 资产调拨
      */
     boolean transfer(Long assetId, Long toDeptId, Long toUserId, String reason, String operator);
+
+    /**
+     * 更新资产维护日期
+     * @param assetId 资产ID
+     * @param lastMaintenanceDate 最后维护日期
+     * @param nextMaintenanceDate 下次维护日期
+     * @return 是否成功
+     */
+    boolean updateMaintenanceDates(Long assetId, java.time.LocalDate lastMaintenanceDate, java.time.LocalDate nextMaintenanceDate);
 }

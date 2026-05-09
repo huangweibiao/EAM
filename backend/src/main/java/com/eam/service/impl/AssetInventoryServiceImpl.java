@@ -111,6 +111,12 @@ public class AssetInventoryServiceImpl extends ServiceImpl<AssetInventoryMapper,
         if (detail.getInventoryTime() == null) {
             detail.setInventoryTime(LocalDateTime.now());
         }
+        // 校验盘点差异需填写差异说明
+        if (detail.getIsMatch() != null && detail.getIsMatch() == 0) {
+            if (!StringUtils.hasText(detail.getRemark())) {
+                throw new BusinessException("盘点存在差异时，必须填写差异说明");
+            }
+        }
         return detailMapper.insert(detail) > 0;
     }
 

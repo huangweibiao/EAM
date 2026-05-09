@@ -5,9 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
+import com.eam.entity.Asset;
+import com.eam.entity.MaintenancePlan;
 import com.eam.entity.MaintenanceRecord;
+import com.eam.mapper.MaintenancePlanMapper;
 import com.eam.mapper.MaintenanceRecordMapper;
+import com.eam.service.IAssetService;
 import com.eam.service.IMaintenanceRecordService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -22,6 +27,12 @@ import java.util.stream.Collectors;
  */
 @Service
 public class MaintenanceRecordServiceImpl extends ServiceImpl<MaintenanceRecordMapper, MaintenanceRecord> implements IMaintenanceRecordService {
+
+    @Autowired
+    private IAssetService assetService;
+
+    @Autowired
+    private MaintenancePlanMapper maintenancePlanMapper;
 
     @Override
     public IPage<MaintenanceRecord> page(Long pageNum, Long pageSize, Long assetId, String maintenanceType) {
@@ -55,7 +66,10 @@ public class MaintenanceRecordServiceImpl extends ServiceImpl<MaintenanceRecordM
         this.save(record);
 
         // 更新资产的最后维护日期和下次维护日期
-        // 这里可以调用AssetService来更新
+        updateAssetMaintenanceDates(record);
+
+        // 更新维护计划的执行时间
+        updateMaintenancePlan(record);
 
         return record;
     }
@@ -117,5 +131,72 @@ public class MaintenanceRecordServiceImpl extends ServiceImpl<MaintenanceRecordM
         return records.stream()
                 .map(r -> r.getCost() != null ? r.getCost() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * 更新资产的维护日期
+     * 规则：资产下次维护日期 = 当前维护日期 + 维护周期（天）
+     */
+    private void updateAssetMaintenanceDates(MaintenanceRecord record) {
+        if (record.getAssetId() == null || record.getMaintenanceDate() == null) {
+            return;
+        }
+
+        Asset asset = assetService.getById(record.getAssetId());
+        if (asset == null) {
+            return;
+        }
+
+        java.time.LocalDate maintenanceDate = record.getMaintenanceDate().toLocalDate();
+        java.time.LocalDate nextMaintenanceDate = null;
+
+        // 如果记录中有建议的下次维护日期，使用它
+        if (record.getNextMaintenanceDate() != null) {
+            nextMaintenanceDate = record.getNextMaintenanceDate();
+        } else if (asset.getMaintenanceCycle() != null && asset.getMaintenanceCycle() > 0) {
+            // 否则根据维护周期计算：当前日期 + 维护周期（天）
+            nextMaintenanceDate = maintenanceDate.plusDays(asset.getMaintenanceCycle());
+        }
+
+        // 更新资产的维护日期
+        assetService.updateMaintenanceDates(record.getAssetId(), maintenanceDate, nextMaintenanceDate);
+    }
+
+    /**
+     * 更新维护计划的执行时间
+     */
+    private void updateMaintenancePlan(MaintenanceRecord record) {
+        if (record.getPlanId() == null) {
+            return;
+        }
+
+        MaintenancePlan plan = maintenancePlanMapper.selectById(record.getPlanId());
+        if (plan == null) {
+            return;
+        }
+
+        // 更新上次执行时间
+        plan.setLastExecuteTime(record.getMaintenanceDate());
+
+        // 计算下次执行时间
+        if (plan.getCycleType() != null && plan.getCycleValue() != null && plan.getCycleValue() > 0) {
+            java.time.LocalDateTime nextExecuteTime = null;
+            switch (plan.getCycleType().toUpperCase()) {
+                case "DAY":
+                    nextExecuteTime = record.getMaintenanceDate().plusDays(plan.getCycleValue());
+                    break;
+                case "MONTH":
+                    nextExecuteTime = record.getMaintenanceDate().plusMonths(plan.getCycleValue());
+                    break;
+                case "YEAR":
+                    nextExecuteTime = record.getMaintenanceDate().plusYears(plan.getCycleValue());
+                    break;
+                default:
+                    nextExecuteTime = record.getMaintenanceDate().plusDays(plan.getCycleValue());
+            }
+            plan.setNextExecuteTime(nextExecuteTime);
+        }
+
+        maintenancePlanMapper.updateById(plan);
     }
 }
