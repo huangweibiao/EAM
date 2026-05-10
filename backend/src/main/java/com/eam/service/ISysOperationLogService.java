@@ -46,4 +46,14 @@ public interface ISysOperationLogService {
      * 批量删除操作日志
      */
     boolean removeByIds(java.util.List<Long> ids);
+
+    /**
+     * 清空所有操作日志
+     */
+    void clearAll();
+
+    /**
+     * 获取日志统计信息
+     */
+    java.util.Map<String, Object> getStatistics(String startDate, String endDate);
 }

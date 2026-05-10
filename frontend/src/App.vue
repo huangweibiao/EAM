@@ -6,7 +6,7 @@
 import { onMounted } from 'vue'
 
 onMounted(() => {
-  console.log('EAM System initialized')
+  // EAM System initialized
 })
 </script>
 

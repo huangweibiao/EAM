@@ -64,4 +64,22 @@ public interface SysOperationLogRepository extends JpaRepository<SysOperationLog
                                  @Param("result") String result,
                                  @Param("ip") String ip,
                                  Pageable pageable);
+
+    /**
+     * 统计今日操作日志数量
+     */
+    @Query("SELECT COUNT(l) FROM SysOperationLog l WHERE DATE(l.createTime) = CURRENT_DATE")
+    Long countToday();
+
+    /**
+     * 按操作类型分组统计
+     */
+    @Query("SELECT l.operation, COUNT(l) FROM SysOperationLog l GROUP BY l.operation")
+    List<Object[]> countGroupByOperation();
+
+    /**
+     * 按模块分组统计
+     */
+    @Query("SELECT l.module, COUNT(l) FROM SysOperationLog l GROUP BY l.module")
+    List<Object[]> countGroupByModule();
 }

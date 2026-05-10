@@ -69,4 +69,26 @@ public class SysOperationLogController {
         operationLogService.removeByIds(ids);
         return Result.success();
     }
+
+    /**
+     * 清空所有日志
+     */
+    @DeleteMapping("/clear")
+    @RequirePermission("system:log:delete")
+    public Result<Void> clear() {
+        operationLogService.clearAll();
+        return Result.success();
+    }
+
+    /**
+     * 日志统计
+     */
+    @GetMapping("/statistics")
+    @RequirePermission("system:log:list")
+    public Result<java.util.Map<String, Object>> statistics(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        java.util.Map<String, Object> stats = operationLogService.getStatistics(startDate, endDate);
+        return Result.success(stats);
+    }
 }

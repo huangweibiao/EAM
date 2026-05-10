@@ -42,11 +42,24 @@ public class AuthController {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
 
-        // 调用 JWT 认证
+        // 创建认证对象
         Authentication authentication = new UsernamePasswordAuthenticationToken(username, password);
-        Authentication authenticate = SecurityContextHolder.getContext().getAuthentication();
+        
+        // 使用 AuthenticationManager 进行认证
+        Authentication authenticated = sysUserService.authenticate(authentication);
+        
+        // 生成 JWT Token
         Map<String, Object> result = new HashMap<>();
-        result.put("token", jwtAuthenticationFilter.generateToken(authenticate));
+        String token = jwtAuthenticationFilter.generateToken(authenticated);
+        result.put("accessToken", token);
+        result.put("tokenType", "Bearer");
+        
+        // 确保在return之前调用getCurrentUser
+        Map<String, Object> userInfoData = getCurrentUser(authenticated);
+        result.put("userInfo", userInfoData);
+        
+        // 设置认证上下文
+        SecurityContextHolder.getContext().setAuthentication(authenticated);
 
         return result;
     }

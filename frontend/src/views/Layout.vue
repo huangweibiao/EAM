@@ -1,8 +1,9 @@
 <template>
   <el-container class="layout-container">
-    <el-aside width="200px">
+    <el-aside :width="isMobile ? '0px' : '200px'" :class="{ 'collapsed': sidebarCollapsed && isMobile }">
       <div class="logo">
-        <h3>EAM System</h3>
+        <h3 v-if="!sidebarCollapsed || !isMobile">EAM System</h3>
+        <h3 v-else>EAM</h3>
       </div>
       <el-menu
         :default-active="activeMenu"
@@ -10,6 +11,8 @@
         background-color="#545c64"
         text-color="#fff"
         active-text-color="#ffd04b"
+        :collapse="sidebarCollapsed && isMobile"
+        :collapse-transition="false"
       >
         <el-menu-item index="/dashboard">
           <el-icon><Odometer /></el-icon>
@@ -133,10 +136,18 @@
     </el-aside>
     <el-container>
       <el-header>
-        <div class="header-content">
-          <div class="header-left">
-            <span class="page-title">{{ currentPageTitle }}</span>
-          </div>
+      <div class="header-content">
+        <div class="header-left">
+          <el-button 
+            v-if="isMobile" 
+            type="text" 
+            @click="toggleSidebar" 
+            class="menu-toggle"
+          >
+            <ele-Menu />
+          </el-button>
+          <h2 class="page-title">{{ currentPageTitle }}</h2>
+        </div>
           <div class="header-right">
             <el-dropdown @command="handleCommand">
               <span class="user-info">
@@ -163,11 +174,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import {
-  Odometer, Setting, User, UserFilled, Menu, OfficeBuilding,
+  Odometer, Setting, User, UserFilled, Menu as EleMenu, OfficeBuilding,
   Box, List, FolderOpened, Switch, Search, Tools, Calendar,
   Document, Tickets, Goods, BottomLeft, BottomRight, Warning,
   ShoppingCart, DocumentAdd, DataAnalysis, DataLine
@@ -182,13 +193,38 @@ const currentPageTitle = computed(() => {
   return route.meta.title as string || '仪表盘'
 })
 
+// 移动端适配相关
+const isMobile = ref(false)
+const sidebarCollapsed = ref(false)
+
+// 检测窗口大小变化
+const checkScreenSize = () => {
+  isMobile.value = window.innerWidth < 768
+  if (isMobile.value) {
+    sidebarCollapsed.value = true
+  }
+}
+
+// 切换侧边栏
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+}
+
+onMounted(() => {
+  checkScreenSize()
+  window.addEventListener('resize', checkScreenSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkScreenSize)
+})
+
 const handleCommand = (command: string) => {
   if (command === 'logout') {
     userStore.logout()
     window.location.href = '/eam/logout'
   } else if (command === 'profile') {
     // TODO: Implement profile page
-    console.log('Profile page')
   }
 }
 
@@ -199,6 +235,16 @@ userStore.initUserInfo()
 <style scoped>
 .layout-container {
   height: 100vh;
+}
+
+.el-aside {
+  background-color: #545c64;
+  transition: width 0.3s ease;
+}
+
+.el-aside.collapsed {
+  width: 0 !important;
+  overflow: hidden;
 }
 
 .el-aside {
@@ -214,6 +260,7 @@ userStore.initUserInfo()
   font-size: 18px;
   font-weight: bold;
   border-bottom: 1px solid #434a50;
+  white-space: nowrap;
 }
 
 .el-header {
@@ -222,6 +269,19 @@ userStore.initUserInfo()
   display: flex;
   align-items: center;
   padding: 0 20px;
+  position: relative;
+  z-index: 1000;
+  min-height: 64px;
+}
+
+.menu-toggle {
+  margin-right: 12px;
+  padding: 8px;
+  min-width: auto;
+}
+
+.menu-toggle .el-icon {
+  font-size: 18px;
 }
 
 .header-content {
@@ -234,12 +294,20 @@ userStore.initUserInfo()
 .header-left {
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .page-title {
   font-size: 18px;
   font-weight: 500;
   color: #303133;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .header-right {
@@ -262,5 +330,67 @@ userStore.initUserInfo()
 .el-main {
   background-color: #f5f7fa;
   padding: 20px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .layout-container {
+    position: relative;
+  }
+  
+  .el-aside {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 999;
+    transition: transform 0.3s ease;
+  }
+  
+  .el-aside.collapsed {
+    transform: translateX(-100%);
+  }
+  
+  .el-header {
+    padding: 0 15px;
+    min-height: 56px;
+  }
+  
+  .page-title {
+    font-size: 16px;
+  }
+  
+  .el-main {
+    padding: 15px;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .header-left {
+    min-width: 0;
+  }
+  
+  .header-right {
+    flex: none;
+  }
+  
+  .user-info span {
+    display: none;
+  }
+}
+
+/* 小屏手机样式 */
+@media (max-width: 480px) {
+  .el-header {
+    padding: 0 10px;
+  }
+  
+  .el-main {
+    padding: 10px;
+  }
+  
+  .logo h3 {
+    font-size: 16px;
+  }
 }
 </style>

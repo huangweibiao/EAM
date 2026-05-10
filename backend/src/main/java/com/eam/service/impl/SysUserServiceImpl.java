@@ -10,6 +10,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,9 +28,15 @@ import java.util.List;
 public class SysUserServiceImpl implements ISysUserService {
 
     private final SysUserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
 
-    public SysUserServiceImpl(SysUserRepository userRepository) {
+    public SysUserServiceImpl(SysUserRepository userRepository, 
+                            AuthenticationManager authenticationManager,
+                            PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.authenticationManager = authenticationManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -107,5 +116,30 @@ public class SysUserServiceImpl implements ISysUserService {
     @Override
     public SysUser getByUsername(String username) {
         return userRepository.findByUsername(username).orElse(null);
+    }
+
+    @Override
+    public Authentication authenticate(Authentication authentication) {
+        // 验证用户名和密码
+        String username = authentication.getName();
+        String password = authentication.getCredentials().toString();
+        
+        // 检查用户是否存在
+        SysUser user = getByUsername(username);
+        if (user == null) {
+            throw new BusinessException("用户名或密码错误");
+        }
+        
+        // 验证密码
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new BusinessException("用户名或密码错误");
+        }
+        
+        // 创建认证成功的Authentication对象
+        return new UsernamePasswordAuthenticationToken(
+            user.getUsername(), 
+            null,  // 密码不再需要
+            authentication.getAuthorities()
+        );
     }
 }

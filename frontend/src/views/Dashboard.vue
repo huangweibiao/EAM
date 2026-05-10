@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
     <el-row :gutter="20">
-      <el-col :span="6">
+      <el-col :xs="12" :sm="6">
         <el-card shadow="hover">
           <div class="stat-card">
             <el-icon class="stat-icon" color="#409eff"><Box /></el-icon>
@@ -12,7 +12,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="6">
         <el-card shadow="hover">
           <div class="stat-card">
             <el-icon class="stat-icon" color="#67c23a"><CircleCheck /></el-icon>
@@ -23,7 +23,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="6">
         <el-card shadow="hover">
           <div class="stat-card">
             <el-icon class="stat-icon" color="#e6a23c"><Tools /></el-icon>
@@ -34,7 +34,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :xs="12" :sm="6">
         <el-card shadow="hover">
           <div class="stat-card">
             <el-icon class="stat-icon" color="#f56c6c"><CircleClose /></el-icon>
@@ -48,7 +48,7 @@
     </el-row>
 
     <el-row :gutter="20" style="margin-top: 20px">
-      <el-col :span="12">
+      <el-col :xs="24" :sm="12">
         <el-card>
           <template #header>
             <div class="card-header">
@@ -68,7 +68,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="12">
+      <el-col :xs="24" :sm="12">
         <el-card>
           <template #header>
             <div class="card-header">
@@ -107,23 +107,23 @@ const userStore = useUserStore()
 
 onMounted(() => {
   // TODO: Load dashboard data
-  console.log('Dashboard mounted')
 })
 </script>
 
 <style scoped>
 .dashboard {
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
 }
 
 .stat-icon {
-  font-size: 48px;
+  font-size: 40px;
 }
 
 .stat-content {
@@ -131,15 +131,15 @@ onMounted(() => {
 }
 
 .stat-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: bold;
   color: #303133;
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 13px;
   color: #909399;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
 .card-header {
@@ -149,30 +149,92 @@ onMounted(() => {
 
 .welcome-content {
   text-align: center;
-  padding: 20px;
+  padding: 15px;
 }
 
 .welcome-content h3 {
-  margin: 20px 0 10px 0;
+  margin: 15px 0 8px 0;
   color: #303133;
+  font-size: 18px;
 }
 
 .welcome-content p {
   color: #909399;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  font-size: 14px;
 }
 
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  gap: 12px;
 }
 
 .quick-actions .el-button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
-  gap: 10px;
+  padding: 15px;
+  gap: 8px;
+  font-size: 13px;
+}
+
+:deep(.el-descriptions) {
+  font-size: 13px;
+}
+
+:deep(.el-descriptions .el-descriptions__label) {
+  width: 80px;
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .dashboard {
+    padding: 15px 10px;
+  }
+  
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .stat-icon {
+    font-size: 32px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
+  
+  .welcome-content {
+    padding: 10px;
+  }
+  
+  .welcome-content h3 {
+    font-size: 16px;
+  }
+  
+  .quick-actions {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  
+  .quick-actions .el-button {
+    padding: 12px;
+    font-size: 12px;
+  }
+  
+  :deep(.el-descriptions) {
+    font-size: 12px;
+  }
+  
+  :deep(.el-descriptions .el-descriptions__label) {
+    width: 60px;
+  }
 }
 </style>

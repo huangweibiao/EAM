@@ -29,11 +29,77 @@
             <el-option label="已关闭" value="CLOSED" />
           </el-select>
         </el-form-item>
+        <el-form-item label="优先级">
+          <el-select v-model="searchForm.priority" placeholder="请选择" clearable>
+            <el-option label="高" value="HIGH" />
+            <el-option label="中" value="MEDIUM" />
+            <el-option label="低" value="LOW" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="时间范围">
+          <el-date-picker
+            v-model="searchForm.startDate"
+            type="date"
+            placeholder="开始日期"
+            style="width: 140px"
+            value-format="YYYY-MM-DD"
+          />
+          <span style="margin: 0 8px;">至</span>
+          <el-date-picker
+            v-model="searchForm.endDate"
+            type="date"
+            placeholder="结束日期"
+            style="width: 140px"
+            value-format="YYYY-MM-DD"
+          />
+          <el-button-group style="margin-left: 8px;">
+            <el-button @click="setDateRange('today')">今天</el-button>
+            <el-button @click="setDateRange('week')">本周</el-button>
+            <el-button @click="setDateRange('month')">本月</el-button>
+          </el-button-group>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
           <el-button @click="handleReset">重置</el-button>
+          <el-button @click="handleExport">导出Excel</el-button>
         </el-form-item>
       </el-form>
+
+      <!-- 统计卡片 -->
+      <el-row :gutter="20" style="margin-bottom: 20px;">
+        <el-col :span="6">
+          <el-card shadow="hover">
+            <div class="stat-card">
+              <div class="stat-value">{{ statusCount.PENDING || 0 }}</div>
+              <div class="stat-label">待处理</div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover">
+            <div class="stat-card">
+              <div class="stat-value text-primary">{{ statusCount.ASSIGNED || 0 }}</div>
+              <div class="stat-label">已指派</div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover">
+            <div class="stat-card">
+              <div class="stat-value text-warning">{{ statusCount.PROCESSING || 0 }}</div>
+              <div class="stat-label">处理中</div>
+            </div>
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card shadow="hover">
+            <div class="stat-card">
+              <div class="stat-value text-success">{{ statusCount.COMPLETED || 0 }}</div>
+              <div class="stat-label">已完成</div>
+            </div>
+          </el-card>
+        </el-col>
+      </el-row>
 
       <!-- 表格区域 -->
       <el-table :data="tableData" border stripe v-loading="loading">
@@ -57,13 +123,15 @@
         <el-table-column prop="reporter" label="报修人" width="100" />
         <el-table-column prop="assignedTo" label="指派给" width="100" />
         <el-table-column prop="reportTime" label="报修时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="回复时间" width="180" prop="replyTime" />
+        <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleView(row)">详情</el-button>
+            <el-button type="primary" link @click="handleDetail(row)">详情</el-button>
             <el-button v-if="row.status === 'PENDING'" type="success" link @click="handleAssign(row)">指派</el-button>
             <el-button v-if="row.status === 'ASSIGNED'" type="warning" link @click="handleProcess(row)">处理</el-button>
             <el-button v-if="row.status === 'PROCESSING'" type="success" link @click="handleComplete(row)">完成</el-button>
             <el-button v-if="row.status === 'COMPLETED'" type="info" link @click="handleClose(row)">关闭</el-button>
+            <el-button v-if="row.status === 'COMPLETED'" type="warning" link @click="handleRate(row)">评价</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -160,10 +228,16 @@
     </el-dialog>
 
     <!-- 评价对话框 -->
-    <el-dialog v-model="rateDialogVisible" title="评价工单" width="400px">
+    <el-dialog v-model="rateDialogVisible" title="评价工单" width="500px">
       <el-form :model="rateForm" label-width="80px">
+        <el-form-item label="工单标题">
+          <el-input v-model="currentOrderTitle" readonly />
+        </el-form-item>
         <el-form-item label="评分">
-          <el-rate v-model="rateForm.rating" :colors="['#99A9BF', '#F7BA2A', '#FF9900']" />
+          <el-rate v-model="rateForm.rating" show-text :colors="['#99A9BF', '#F7BA2A', '#FF9900']" />
+        </el-form-item>
+        <el-form-item label="评价内容">
+          <el-input v-model="rateForm.comment" type="textarea" :rows="3" placeholder="请输入评价内容" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -171,20 +245,57 @@
         <el-button type="primary" @click="handleRateSubmit">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 工单详情对话框 -->
+    <el-dialog v-model="detailDialogVisible" :title="'工单详情 - ' + (currentOrder?.title || '')" width="800px">
+      <el-descriptions v-if="currentOrder" :column="2" border>
+        <el-descriptions-item label="工单编号">{{ currentOrder.orderNo }}</el-descriptions-item>
+        <el-descriptions-item label="工单类型">{{ getTypeText(currentOrder.orderType) }}</el-descriptions-item>
+        <el-descriptions-item label="优先级">
+          <el-tag :type="getPriorityType(currentOrder.priority)">{{ currentOrder.priority }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          <el-tag :type="getStatusType(currentOrder.status)">{{ getStatusText(currentOrder.status) }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="报修人">{{ currentOrder.reporter }}</el-descriptions-item>
+        <el-descriptions-item label="指派给">{{ currentOrder.assignedTo || '--' }}</el-descriptions-item>
+        <el-descriptions-item label="报修时间" :span="2">{{ currentOrder.reportTime }}</el-descriptions-item>
+        <el-descriptions-item label="问题描述" :span="2">
+          <div style="word-wrap: break-word;">{{ currentOrder.description || '无' }}</div>
+        </el-descriptions-item>
+        <el-descriptions-item label="解决方案" :span="2" v-if="currentOrder.solution">
+          <div style="word-wrap: break-word;">{{ currentOrder.solution }}</div>
+        </el-descriptions-item>
+        <el-descriptions-item label="备注信息" :span="2" v-if="currentOrder.remark">
+          <div style="word-wrap: break-word;">{{ currentOrder.remark }}</div>
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ currentOrder.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ currentOrder.updateTime }}</el-descriptions-item>
+        <el-descriptions-item label="关联资产ID" v-if="currentOrder.assetId">{{ currentOrder.assetId }}</el-descriptions-item>
+      </el-descriptions>
+      <div v-else>加载中...</div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { workOrderApi } from '@/api'
+import { ExcelExporter } from '@/utils/excelExport'
+
+const router = useRouter()
 
 // 搜索表单
 const searchForm = reactive({
   keyword: '',
   orderType: '',
-  status: ''
+  status: '',
+  priority: '',
+  startDate: '',
+  endDate: ''
 })
 
 // 分页配置
@@ -224,7 +335,21 @@ const completeForm = reactive({ solution: '' })
 
 // 评价对话框
 const rateDialogVisible = ref(false)
-const rateForm = reactive({ rating: 5 })
+const rateForm = reactive({ rating: 5, comment: '' })
+const currentOrderTitle = ref('')
+
+// 工单详情对话框
+const detailDialogVisible = ref(false)
+const currentOrder = ref<any>(null)
+
+// 状态统计
+const statusCount = reactive({
+  PENDING: 0,
+  ASSIGNED: 0,
+  PROCESSING: 0,
+  COMPLETED: 0,
+  CLOSED: 0
+})
 
 // 表单验证
 const formRules: FormRules = {
@@ -275,22 +400,37 @@ const getStatusText = (status: string) => {
 const loadData = async () => {
   loading.value = true
   try {
-    const res = await workOrderApi.page({
+    const params = {
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
       keyword: searchForm.keyword || undefined,
       orderType: searchForm.orderType || undefined,
-      status: searchForm.status || undefined
-    })
+      status: searchForm.status || undefined,
+      priority: searchForm.priority || undefined,
+      startDate: searchForm.startDate || undefined,
+      endDate: searchForm.endDate || undefined
+    }
+    
+    const res = await workOrderApi.page(params)
     if (res.data) {
       tableData.value = res.data.records || []
       pagination.total = res.data.total || 0
+      updateStatusCount()
     }
   } catch (error) {
     console.error('加载失败:', error)
   } finally {
     loading.value = false
   }
+}
+
+// 更新状态统计
+const updateStatusCount = () => {
+  statusCount.PENDING = tableData.value.filter(item => item.status === 'PENDING').length
+  statusCount.ASSIGNED = tableData.value.filter(item => item.status === 'ASSIGNED').length
+  statusCount.PROCESSING = tableData.value.filter(item => item.status === 'PROCESSING').length
+  statusCount.COMPLETED = tableData.value.filter(item => item.status === 'COMPLETED').length
+  statusCount.CLOSED = tableData.value.filter(item => item.status === 'CLOSED').length
 }
 
 // 搜索
@@ -304,8 +444,80 @@ const handleReset = () => {
   searchForm.keyword = ''
   searchForm.orderType = ''
   searchForm.status = ''
+  searchForm.priority = ''
+  searchForm.startDate = ''
+  searchForm.endDate = ''
   pagination.pageNum = 1
   loadData()
+}
+
+// 导出Excel
+const handleExport = () => {
+  if (!tableData.value || tableData.value.length === 0) {
+    ElMessage.warning('没有数据可导出')
+    return
+  }
+  
+  try {
+    ExcelExporter.exportWorkOrder(tableData.value)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error('导出失败')
+    console.error('Excel导出错误:', error)
+  }
+}
+
+// 工单详情
+const handleDetail = (row: any) => {
+  router.push(`/workorder/detail/${row.id}`)
+}
+
+// 评价工单
+const handleRate = (row: any) => {
+  currentOrderId.value = row.id
+  currentOrderTitle.value = row.title
+  rateForm.rating = 5
+  rateForm.comment = ''
+  rateDialogVisible.value = true
+}
+
+// 提交评价
+const handleRateSubmit = async () => {
+  if (!currentOrderId.value) return
+  try {
+    await workOrderApi.rate(currentOrderId.value, rateForm.rating)
+    ElMessage.success('评价成功')
+    rateDialogVisible.value = false
+    if (rateForm.comment) {
+      ElMessage.info('评价内容：' + rateForm.comment)
+    }
+  } catch (error: any) {
+    ElMessage.error(error.message || '评价失败')
+  }
+}
+
+// 设置时间范围
+const setDateRange = (range: string) => {
+  const now = new Date()
+  switch (range) {
+    case 'today':
+      const today = now.toISOString().split('T')[0]
+      searchForm.startDate = today
+      searchForm.endDate = today
+      break
+    case 'week':
+      const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()))
+      const endOfWeek = new Date(now.setDate(now.getDate() + 6))
+      searchForm.startDate = startOfWeek.toISOString().split('T')[0]
+      searchForm.endDate = endOfWeek.toISOString().split('T')[0]
+      break
+    case 'month':
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      searchForm.startDate = startOfMonth.toISOString().split('T')[0]
+      searchForm.endDate = endOfMonth.toISOString().split('T')[0]
+      break
+  }
 }
 
 // 新增
@@ -431,5 +643,49 @@ onMounted(() => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 10px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #909399;
+  font-size: 14px;
+}
+
+.text-primary {
+  color: #409EFF;
+}
+
+.text-warning {
+  color: #E6A23C;
+}
+
+.text-success {
+  color: #67C23A;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .work-order {
+    padding: 10px;
+  }
+  
+  .search-form .el-form-item {
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 20px;
+  }
 }
 </style>

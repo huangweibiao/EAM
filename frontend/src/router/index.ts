@@ -48,6 +48,12 @@ const routes: Array<RouteRecordRaw> = [
             name: 'Dept',
             component: () => import('@/views/system/Dept.vue'),
             meta: { title: '部门管理', requiresAuth: true }
+          },
+          {
+            path: 'log',
+            name: 'Log',
+            component: () => import('@/views/system/OperateLog.vue'),
+            meta: { title: '操作日志', requiresAuth: true }
           }
         ]
       },
@@ -111,6 +117,12 @@ const routes: Array<RouteRecordRaw> = [
             name: 'WorkOrderList',
             component: () => import('@/views/workorder/WorkOrder.vue'),
             meta: { title: '工单列表', requiresAuth: true }
+          },
+          {
+            path: 'detail/:id',
+            name: 'WorkOrderDetail',
+            component: () => import('@/views/workorder/WorkOrderDetail.vue'),
+            meta: { title: '工单详情', requiresAuth: true }
           }
         ]
       },
@@ -174,6 +186,24 @@ const routes: Array<RouteRecordRaw> = [
             name: 'ReportDashboard',
             component: () => import('@/views/report/Dashboard.vue'),
             meta: { title: '数据看板', requiresAuth: true }
+          },
+          {
+            path: 'asset-summary',
+            name: 'AssetSummary',
+            component: () => import('@/views/report/AssetSummary.vue'),
+            meta: { title: '资产汇总统计', requiresAuth: true }
+          },
+          {
+            path: 'maintenance-cost',
+            name: 'MaintenanceCost',
+            component: () => import('@/views/report/MaintenanceCost.vue'),
+            meta: { title: '维护成本统计', requiresAuth: true }
+          },
+          {
+            path: 'inventory-analysis',
+            name: 'InventoryAnalysis',
+            component: () => import('@/views/report/InventoryAnalysis.vue'),
+            meta: { title: '库存分析报表', requiresAuth: true }
           }
         ]
       }

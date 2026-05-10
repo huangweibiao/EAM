@@ -25,4 +25,6 @@ public interface ISysUserService {
     List<SysUser> list();
 
     SysUser getByUsername(String username);
+
+    org.springframework.security.core.Authentication authenticate(org.springframework.security.core.Authentication authentication);
 }

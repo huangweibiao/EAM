@@ -12,8 +12,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 操作日志 Service实现
@@ -77,5 +81,37 @@ public class SysOperationLogServiceImpl implements ISysOperationLogService {
     public boolean removeByIds(List<Long> ids) {
         operationLogRepository.deleteAllById(ids);
         return true;
+    }
+
+    @Override
+    public void clearAll() {
+        operationLogRepository.deleteAll();
+    }
+
+    @Override
+    public Map<String, Object> getStatistics(String startDate, String endDate) {
+        Map<String, Object> statistics = new HashMap<>();
+        
+        // 基础统计信息
+        statistics.put("totalLogs", operationLogRepository.count());
+        statistics.put("todayLogs", operationLogRepository.countToday());
+        
+        // 操作类型统计
+        List<Object[]> operationStats = operationLogRepository.countGroupByOperation();
+        Map<String, Long> operationCounts = new HashMap<>();
+        for (Object[] stat : operationStats) {
+            operationCounts.put((String) stat[0], (Long) stat[1]);
+        }
+        statistics.put("operationStats", operationCounts);
+        
+        // 模块统计
+        List<Object[]> moduleStats = operationLogRepository.countGroupByModule();
+        Map<String, Long> moduleCounts = new HashMap<>();
+        for (Object[] stat : moduleStats) {
+            moduleCounts.put((String) stat[0], (Long) stat[1]);
+        }
+        statistics.put("moduleStats", moduleCounts);
+        
+        return statistics;
     }
 }

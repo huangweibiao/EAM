@@ -79,7 +79,8 @@ export interface LoginResponse {
 export const authApi = {
   getCurrentUser: () => service.get<any, ApiResponse<UserInfo>>('/api/auth/user'),
   checkAuth: () => service.get<any, ApiResponse<boolean>>('/api/auth/check'),
-  getOidcUser: () => service.get<any, ApiResponse<any>>('/api/auth/oidc-user')
+  getOidcUser: () => service.get<any, ApiResponse<any>>('/api/auth/oidc-user'),
+  login: (data: LoginData) => service.post<any, ApiResponse<LoginResponse>>('/api/auth/login', data)
 }
 
 // Hello API
@@ -257,6 +258,15 @@ export const reportApi = {
   maintenanceCost: () => service.get<any, ApiResponse<any>>('/api/report/maintenance-cost'),
   inventorySummary: () => service.get<any, ApiResponse<any>>('/api/report/inventory-summary'),
   inboundOutbound: () => service.get<any, ApiResponse<any>>('/api/report/inbound-outbound')
+}
+
+// Log API
+export const logApi = {
+  page: (params: any) => service.get<any, ApiResponse<any>>('/api/system/log/page', { params }),
+  getById: (id: number) => service.get<any, ApiResponse<any>>(`/api/system/log/${id}`),
+  delete: (id: number) => service.delete<any, ApiResponse<any>>(`/api/system/log/${id}`),
+  clear: () => service.delete<any, ApiResponse<any>>('/api/system/log/clear'),
+  statistics: (params: any) => service.get<any, ApiResponse<any>>('/api/system/log/statistics', { params })
 }
 
 export default service
