@@ -116,6 +116,16 @@ public class MaintenancePlanServiceImpl implements IMaintenancePlanService {
                     nextTime = baseTime.plusDays(30);
             }
             plan.setNextExecuteTime(nextTime);
+            }
         }
+
+    @Override
+    public List<MaintenancePlan> list() {
+        return maintenancePlanRepository.findAll();
+    }
+
+    @Override
+    public MaintenancePlan getById(Long id) {
+        return maintenancePlanRepository.findById(id).orElse(null);
     }
 }

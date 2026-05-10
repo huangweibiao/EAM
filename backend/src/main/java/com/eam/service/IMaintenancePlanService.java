@@ -21,4 +21,8 @@ public interface IMaintenancePlanService {
     List<MaintenancePlan> listPending();
 
     List<MaintenancePlan> listExpiring(int days);
+
+    List<MaintenancePlan> list();
+
+    MaintenancePlan getById(Long id);
 }

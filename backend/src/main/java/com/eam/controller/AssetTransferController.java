@@ -26,11 +26,11 @@ public class AssetTransferController {
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) String status) {
-        Page<AssetTransfer> page = assetTransferService.page(pageNum, pageSize, status);
+        Page<AssetTransfer> page = assetTransferService.page((long)pageNum, (long)pageSize, status);
         PageResult<AssetTransfer> result = PageResult.of(
                 page.getTotalElements(),
-                page.getNumber(),
-                page.getSize(),
+                (long)page.getNumber(),
+                (long)page.getSize(),
                 page.getContent()
         );
         return Result.success(result);

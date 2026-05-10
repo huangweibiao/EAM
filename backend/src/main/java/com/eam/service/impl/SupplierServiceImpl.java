@@ -76,4 +76,9 @@ public class SupplierServiceImpl implements ISupplierService {
         supplierRepository.deleteById(id);
         return true;
     }
+
+    @Override
+    public Supplier getById(Long id) {
+        return supplierRepository.findById(id).orElse(null);
+    }
 }

@@ -31,4 +31,8 @@ public interface IMaintenanceRecordService {
      * 获取总维护成本
      */
     BigDecimal getTotalCost();
+
+    List<MaintenanceRecord> list();
+
+    MaintenanceRecord getById(Long id);
 }

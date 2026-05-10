@@ -2,7 +2,8 @@ package com.eam.service.impl;
 
 import com.eam.entity.AssetCategory;
 import com.eam.repository.AssetCategoryRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -16,12 +17,11 @@ import java.util.List;
  * 带缓存的资产分类服务
  * 为常用静态数据添加Redis缓存
  */
-@Slf4j
 @Service
 @CacheConfig(cacheNames = "asset:category")
 public class CachedAssetCategoryServiceImpl {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CachedAssetCategoryServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(CachedAssetCategoryServiceImpl.class);
 
     private final AssetCategoryRepository categoryRepository;
 

@@ -16,4 +16,6 @@ public interface ISupplierService {
     Supplier update(Supplier supplier);
 
     boolean delete(Long id);
+
+    Supplier getById(Long id);
 }

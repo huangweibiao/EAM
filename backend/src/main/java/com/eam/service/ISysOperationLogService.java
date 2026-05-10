@@ -4,7 +4,7 @@ import com.eam.entity.SysOperationLog;
 import org.springframework.data.domain.Page;
 
 /**
- * 操作日志 Service接口
+ * 操作日志 Service 接口
  */
 public interface ISysOperationLogService {
 
@@ -26,4 +26,24 @@ public interface ISysOperationLogService {
      * @return 分页结果
      */
     Page<SysOperationLog> page(Integer pageNum, Integer pageSize, String username, String operation, String module);
+
+    /**
+     * 根据ID获取操作日志
+     */
+    SysOperationLog getById(Long id);
+
+    /**
+     * 根据用户ID查询操作日志
+     */
+    java.util.List<SysOperationLog> getByUserId(Long userId);
+
+    /**
+     * 删除操作日志
+     */
+    boolean removeById(Long id);
+
+    /**
+     * 批量删除操作日志
+     */
+    boolean removeByIds(java.util.List<Long> ids);
 }

@@ -80,4 +80,6 @@ public interface MaintenanceRecordRepository extends JpaRepository<MaintenanceRe
                                    @Param("technician") String technician,
                                    @Param("result") String result,
                                    Pageable pageable);
+
+    List<MaintenanceRecord> findByMaintenanceDateBetween(java.time.LocalDateTime startDate, java.time.LocalDateTime endDate);
 }

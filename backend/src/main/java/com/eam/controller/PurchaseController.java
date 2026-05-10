@@ -19,24 +19,34 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/purchase")
 public class PurchaseController {
 
-    @Autowired
-    private IPurchaseRequestService requestService;
+    private final IPurchaseRequestService requestService;
+    private final IPurchaseOrderService orderService;
+    private final ISupplierService supplierService;
 
     @Autowired
-    private IPurchaseOrderService orderService;
-
-    @Autowired
-    private ISupplierService supplierService;
+    public PurchaseController(IPurchaseRequestService requestService,
+                            IPurchaseOrderService orderService,
+                            ISupplierService supplierService) {
+        this.requestService = requestService;
+        this.orderService = orderService;
+        this.supplierService = supplierService;
+    }
 
     // ========== 采购申请 ==========
 
     @GetMapping("/request/page")
     public Result<PageResult<PurchaseRequest>> requestPage(
-            @RequestParam(defaultValue = "1") Long pageNum,
-            @RequestParam(defaultValue = "10") Long pageSize,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String status) {
-        Page<PurchaseRequest> page = requestService.page(pageNum, pageSize, status);
-        return Result.success(PageResult.of(page.getTotalElements(), page.getNumber(), page.getSize(), page.getContent()));
+        Page<PurchaseRequest> page = requestService.page((long)pageNum, (long)pageSize, status);
+        PageResult<PurchaseRequest> result = PageResult.of(
+                page.getTotalElements(),
+                (long)page.getNumber(),
+                (long)page.getSize(),
+                page.getContent()
+        );
+        return Result.success(result);
     }
 
     @GetMapping("/request/list")
@@ -47,6 +57,11 @@ public class PurchaseController {
     @PostMapping("/request/add")
     public Result<PurchaseRequest> addRequest(@RequestBody PurchaseRequest request) {
         return Result.success(requestService.add(request));
+    }
+
+    @GetMapping("/request/{id}")
+    public Result<PurchaseRequest> getRequestById(@PathVariable Long id) {
+        return Result.success(requestService.getById(id));
     }
 
     @PostMapping("/request/approve")
@@ -64,11 +79,17 @@ public class PurchaseController {
 
     @GetMapping("/order/page")
     public Result<PageResult<PurchaseOrder>> orderPage(
-            @RequestParam(defaultValue = "1") Long pageNum,
-            @RequestParam(defaultValue = "10") Long pageSize,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(required = false) String status) {
-        Page<PurchaseOrder> page = orderService.page(pageNum, pageSize, status);
-        return Result.success(PageResult.of(page.getTotalElements(), page.getNumber(), page.getSize(), page.getContent()));
+        Page<PurchaseOrder> page = orderService.page((long)pageNum, (long)pageSize, status);
+        PageResult<PurchaseOrder> result = PageResult.of(
+                page.getTotalElements(),
+                (long)page.getNumber(),
+                (long)page.getSize(),
+                page.getContent()
+        );
+        return Result.success(result);
     }
 
     @GetMapping("/order/list")
@@ -81,8 +102,13 @@ public class PurchaseController {
         return Result.success(orderService.add(order));
     }
 
+    @GetMapping("/order/{id}")
+    public Result<PurchaseOrder> getOrderById(@PathVariable Long id) {
+        return Result.success(orderService.getById(id));
+    }
+
     @PostMapping("/order/receive")
-    public Result<PurchaseOrder> receiveOrder(@RequestParam Long id) {
+    public Result<PurchaseOrder> receiveOrder(@PathVariable Long id) {
         return Result.success(orderService.receive(id));
     }
 
@@ -98,12 +124,17 @@ public class PurchaseController {
         return Result.success(supplierService.listAll());
     }
 
+    @GetMapping("/supplier/{id}")
+    public Result<Supplier> getSupplierById(@PathVariable Long id) {
+        return Result.success(supplierService.getById(id));
+    }
+
     @PostMapping("/supplier/add")
     public Result<Supplier> addSupplier(@RequestBody Supplier supplier) {
         return Result.success(supplierService.add(supplier));
     }
 
-    @PutMapping("/supplier/update")
+    @PostMapping("/supplier/update")
     public Result<Supplier> updateSupplier(@RequestBody Supplier supplier) {
         return Result.success(supplierService.update(supplier));
     }

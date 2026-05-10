@@ -6,8 +6,8 @@ import com.eam.entity.AssetChangeLog;
 import com.eam.entity.AssetTransfer;
 import com.eam.repository.AssetChangeLogRepository;
 import com.eam.repository.AssetTransferRepository;
-import com.eam.service.IAssetTransferService;
 import com.eam.service.IAssetService;
+import com.eam.service.IAssetTransferService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,8 +33,8 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
 
     @Autowired
     public AssetTransferServiceImpl(AssetTransferRepository transferRepository,
-                                     AssetChangeLogRepository changeLogRepository,
-                                     IAssetService assetService) {
+                                      AssetChangeLogRepository changeLogRepository,
+                                      IAssetService assetService) {
         this.transferRepository = transferRepository;
         this.changeLogRepository = changeLogRepository;
         this.assetService = assetService;
@@ -43,44 +42,33 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
 
     @Override
     public Page<AssetTransfer> page(Long pageNum, Long pageSize, String status) {
-        // JPA 分页从 0 开始，MyBatis-Plus 从 1 开始，需要转换
-        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
-                Sort.by(Sort.Direction.DESC, "createTime"));
-
         Specification<AssetTransfer> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            if (StringUtils.hasText(status)) {
+            if (status != null && !status.isEmpty()) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
+        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
+                Sort.by(Sort.Direction.DESC, "createTime"));
         return transferRepository.findAll(spec, pageable);
     }
 
     @Override
     public AssetTransfer create(AssetTransfer transfer) {
-        // 生成调拨单号
-        String transferNo = "TRF" + System.currentTimeMillis();
-        transfer.setTransferNo(transferNo);
+        if (transfer.getAssetId() == null) {
+            throw new BusinessException("资产ID不能为空");
+        }
+        transfer.setCreateTime(LocalDateTime.now());
         if (transfer.getStatus() == null) {
             transfer.setStatus("PENDING");
         }
-        if (transfer.getTransferTime() == null) {
-            transfer.setTransferTime(LocalDateTime.now());
-        }
-
-        // 检查资产是否存在
-        Asset asset = assetService.getById(transfer.getAssetId());
-        if (asset == null) {
-            throw new BusinessException("资产不存在");
-        }
-
         return transferRepository.save(transfer);
     }
 
     @Override
-    public AssetTransfer approve(Long id, String approver, boolean approved) {
+    public AssetTransfer approve(Long id, String approver, boolean approved, String remark) {
         AssetTransfer transfer = transferRepository.findById(id).orElse(null);
         if (transfer == null) {
             throw new BusinessException("调拨单不存在");
@@ -92,14 +80,18 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
         transfer.setApprover(approver);
         transfer.setApproveTime(LocalDateTime.now());
         transfer.setStatus(approved ? "APPROVED" : "REJECTED");
-        transferRepository.save(transfer);
+        
+        // 记录审批备注
+        if (remark != null && !remark.isEmpty()) {
+            transfer.setRemark(remark);
+        }
 
         // 如果审批通过，自动完成调拨（更新资产信息）
         if (approved) {
             complete(id);
         }
 
-        return transfer;
+        return transferRepository.save(transfer);
     }
 
     @Override
@@ -112,48 +104,57 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
             throw new BusinessException("只有已审批的调拨单可以完成");
         }
 
-        // 获取资产原信息
+        // 更新资产信息
         Asset asset = assetService.getById(transfer.getAssetId());
         if (asset == null) {
             throw new BusinessException("资产不存在");
         }
+        
+        // 生成资产变动记录 - 部门变动
+        AssetChangeLog deptLog = new AssetChangeLog();
+        deptLog.setAssetId(transfer.getAssetId());
+        deptLog.setChangeType("DEPT");
+        deptLog.setOldValue(String.valueOf(asset.getDeptId()));
+        deptLog.setNewValue(String.valueOf(transfer.getToDeptId()));
+        deptLog.setReason("资产调拨: " + transfer.getTransferReason());
+        deptLog.setChangeTime(LocalDateTime.now());
+        deptLog.setOperator(transfer.getApprover());
+        changeLogRepository.save(deptLog);
 
-        Long oldDeptId = asset.getDeptId();
-        Long oldUserId = asset.getUserId();
+        // 如果使用人也变更了，生成使用人变动记录
+        if (transfer.getToUserId() != null && !transfer.getToUserId().equals(asset.getUserId())) {
+            AssetChangeLog userLog = new AssetChangeLog();
+            userLog.setAssetId(transfer.getAssetId());
+            userLog.setChangeType("USER");
+            userLog.setOldValue(String.valueOf(asset.getUserId()));
+            userLog.setNewValue(String.valueOf(transfer.getToUserId()));
+            userLog.setReason("资产调拨: " + transfer.getTransferReason());
+            userLog.setChangeTime(LocalDateTime.now());
+            userLog.setOperator(transfer.getApprover());
+            changeLogRepository.save(userLog);
+        }
 
-        // 更新资产信息（部门和使用人）
+        // 更新资产
         asset.setDeptId(transfer.getToDeptId());
         if (transfer.getToUserId() != null) {
             asset.setUserId(transfer.getToUserId());
         }
         assetService.update(asset);
 
-        // 生成资产变动记录 - 部门变动
-        AssetChangeLog deptLog = new AssetChangeLog();
-        deptLog.setAssetId(transfer.getAssetId());
-        deptLog.setChangeType("DEPT");
-        deptLog.setOldValue(String.valueOf(oldDeptId));
-        deptLog.setNewValue(String.valueOf(transfer.getToDeptId()));
-        deptLog.setReason("资产调拨: " + transfer.getTransferReason());
-        deptLog.setChangeTime(LocalDateTime.now());
-        deptLog.setOperator(transfer.getOperator());
-        changeLogRepository.save(deptLog);
-
-        // 如果使用人也变更了，生成使用人变动记录
-        if (transfer.getToUserId() != null && !transfer.getToUserId().equals(oldUserId)) {
-            AssetChangeLog userLog = new AssetChangeLog();
-            userLog.setAssetId(transfer.getAssetId());
-            userLog.setChangeType("USER");
-            userLog.setOldValue(String.valueOf(oldUserId));
-            userLog.setNewValue(String.valueOf(transfer.getToUserId()));
-            userLog.setReason("资产调拨: " + transfer.getTransferReason());
-            userLog.setChangeTime(LocalDateTime.now());
-            userLog.setOperator(transfer.getOperator());
-            changeLogRepository.save(userLog);
-        }
-
+        // 更新调拨单
         transfer.setStatus("COMPLETED");
+        transfer.setCompleteTime(LocalDateTime.now());
         return transferRepository.save(transfer);
+    }
+
+    @Override
+    public List<AssetTransfer> list() {
+        return transferRepository.findAll();
+    }
+
+    @Override
+    public AssetTransfer getById(Long id) {
+        return transferRepository.findById(id).orElse(null);
     }
 
     @Override

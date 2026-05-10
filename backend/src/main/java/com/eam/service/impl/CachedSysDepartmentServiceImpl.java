@@ -2,7 +2,8 @@ package com.eam.service.impl;
 
 import com.eam.entity.SysDepartment;
 import com.eam.repository.SysDepartmentRepository;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -16,12 +17,11 @@ import java.util.List;
  * 带缓存的部门服务
  * 为常用静态数据添加Redis缓存
  */
-@Slf4j
 @Service
 @CacheConfig(cacheNames = "sys:dept")
 public class CachedSysDepartmentServiceImpl {
 
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CachedSysDepartmentServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(CachedSysDepartmentServiceImpl.class);
 
     private final SysDepartmentRepository departmentRepository;
 

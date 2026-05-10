@@ -14,9 +14,15 @@ public interface IAssetTransferService {
 
     AssetTransfer create(AssetTransfer transfer);
 
-    AssetTransfer approve(Long id, String approver, boolean approved);
+    AssetTransfer approve(Long id, String approver, boolean approved, String remark);
 
     AssetTransfer complete(Long id);
 
+    List<AssetTransfer> list();
+
+    AssetTransfer getById(Long id);
+
     List<AssetTransfer> listPending();
+
+    AssetTransfer approve(Long id, String approver);
 }

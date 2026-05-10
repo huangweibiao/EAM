@@ -4,7 +4,8 @@ import com.eam.entity.MaintenancePlan;
 import com.eam.entity.WorkOrder;
 import com.eam.repository.MaintenancePlanRepository;
 import com.eam.service.IWorkOrderService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -18,9 +19,10 @@ import java.util.List;
  * 维护计划定时任务
  * 每日检查到期维护计划，自动生成对应工单
  */
-@Slf4j
 @Component
 public class MaintenancePlanJob implements Job {
+
+    private static final Logger log = LoggerFactory.getLogger(MaintenancePlanJob.class);
 
     @Autowired
     private MaintenancePlanRepository maintenancePlanRepository;

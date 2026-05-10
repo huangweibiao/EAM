@@ -28,7 +28,7 @@ public class SysOperationLogController {
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String module,
             @RequestParam(required = false) String operation) {
-        IPagePage<SysOperationLog> page = operationLogService.page(pageNum, pageSize, username, operation, module);
+        Page<SysOperationLog> page = operationLogService.page(pageNum, pageSize, username, operation, module);
         return Result.success(PageResult.of(page));
     }
 
