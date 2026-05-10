@@ -29,8 +29,8 @@ public class AssetTransferController {
         Page<AssetTransfer> page = assetTransferService.page((long)pageNum, (long)pageSize, status);
         PageResult<AssetTransfer> result = PageResult.of(
                 page.getTotalElements(),
-                (long)page.getNumber(),
-                (long)page.getSize(),
+                page.getNumber(),
+                page.getSize(),
                 page.getContent()
         );
         return Result.success(result);

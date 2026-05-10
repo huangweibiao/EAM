@@ -128,4 +128,11 @@ public class SparePartServiceImpl implements ISparePartService {
         sparePartRepository.save(sparePart);
         return true;
     }
+
+    @Override
+    public List<SparePart> listPending() {
+        return sparePartRepository.findAll().stream()
+                .filter(part -> part.getStatus() != null && "PENDING".equals(part.getStatus()))
+                .collect(Collectors.toList());
+    }
 }

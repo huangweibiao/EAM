@@ -127,12 +127,8 @@ public class AssetTransfer {
         this.transferTime = transferTime;
     }
 
-    public String getOperator() {
-        return operator;
-    }
-
-    public void setOperator(String operator) {
-        this.operator = operator;
+    public void setCompleteTime(LocalDateTime completeTime) {
+        this.transferTime = completeTime;
     }
 
     public String getApprover() {
@@ -157,14 +153,6 @@ public class AssetTransfer {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
     }
 
     public LocalDateTime getCreateTime() {

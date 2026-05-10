@@ -10,9 +10,9 @@ spring:
   # Database Configuration
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/eam?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/eam_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
-    password: root
+    password: rootadmin
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
@@ -29,25 +29,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
-
-  # OAuth2 Client Configuration
-  security:
-    oauth2:
-      client:
-        registration:
-          oauth2-server:
-            client-id: eam-client
-            client-secret: eam-secret
-            authorization-grant-type: authorization_code
-            redirect-uri: http://localhost:8080/eam/login/oauth2/code/oauth2-server
-            scope: read,write
-        provider:
-          oauth2-server:
-            authorization-uri: http://localhost:9000/oauth2/authorize
-            token-uri: http://localhost:9000/oauth2/token
-            user-info-uri: http://localhost:9000/oauth2/userinfo
-            user-name-attribute: username
-
+        
   # Redis Configuration
   data:
     redis:

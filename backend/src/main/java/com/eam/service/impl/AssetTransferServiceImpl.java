@@ -8,13 +8,12 @@ import com.eam.repository.AssetChangeLogRepository;
 import com.eam.repository.AssetTransferRepository;
 import com.eam.service.IAssetService;
 import com.eam.service.IAssetTransferService;
-import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -43,11 +42,11 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
     @Override
     public Page<AssetTransfer> page(Long pageNum, Long pageSize, String status) {
         Specification<AssetTransfer> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             if (status != null && !status.isEmpty()) {
                 predicates.add(cb.equal(root.get("status"), status));
             }
-            return cb.and(predicates.toArray(new Predicate[0]));
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
 
         Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
@@ -68,7 +67,7 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
     }
 
     @Override
-    public AssetTransfer approve(Long id, String approver, boolean approved, String remark) {
+    public AssetTransfer approve(Long id, String approver, boolean approved) {
         AssetTransfer transfer = transferRepository.findById(id).orElse(null);
         if (transfer == null) {
             throw new BusinessException("调拨单不存在");
@@ -80,11 +79,6 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
         transfer.setApprover(approver);
         transfer.setApproveTime(LocalDateTime.now());
         transfer.setStatus(approved ? "APPROVED" : "REJECTED");
-        
-        // 记录审批备注
-        if (remark != null && !remark.isEmpty()) {
-            transfer.setRemark(remark);
-        }
 
         // 如果审批通过，自动完成调拨（更新资产信息）
         if (approved) {
@@ -109,7 +103,7 @@ public class AssetTransferServiceImpl implements IAssetTransferService {
         if (asset == null) {
             throw new BusinessException("资产不存在");
         }
-        
+
         // 生成资产变动记录 - 部门变动
         AssetChangeLog deptLog = new AssetChangeLog();
         deptLog.setAssetId(transfer.getAssetId());

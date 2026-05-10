@@ -87,23 +87,21 @@ public class MaintenanceRecordServiceImpl implements IMaintenanceRecordService {
         Map<String, List<MaintenanceRecord>> grouped = records.stream()
                 .collect(Collectors.groupingBy(record -> {
                     LocalDateTime date = record.getMaintenanceDate();
-                    return date.getYear() + "-" + String.format("%02d", date.getMonthValue() + 1);
+                    return date.getYear() + "-" + String.format("%02d", date.getMonthValue());
                 }));
 
         // 计算总成本
-        Map<String, Object> result = grouped.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> {
-                            BigDecimal totalCost = entry.getValue().stream()
-                                    .map(r -> r.getCost() != null ? r.getCost() : BigDecimal.ZERO)
-                                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-                            Map<String, Object> monthData = new java.util.HashMap<>();
-                            monthData.put("count", entry.getValue().size());
-                            monthData.put("totalCost", totalCost);
-                            return monthData;
-                        }
-                ));
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map.Entry<String, List<MaintenanceRecord>> entry : grouped.entrySet()) {
+            BigDecimal totalCost = entry.getValue().stream()
+                    .map(r -> r.getCost() != null ? r.getCost() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            Map<String, Object> monthData = new java.util.HashMap<>();
+            monthData.put("month", entry.getKey());
+            monthData.put("count", entry.getValue().size());
+            monthData.put("totalCost", totalCost);
+            result.add(monthData);
+        }
 
         return result;
     }

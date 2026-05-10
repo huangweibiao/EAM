@@ -42,8 +42,8 @@ public class PurchaseController {
         Page<PurchaseRequest> page = requestService.page((long)pageNum, (long)pageSize, status);
         PageResult<PurchaseRequest> result = PageResult.of(
                 page.getTotalElements(),
-                (long)page.getNumber(),
-                (long)page.getSize(),
+                page.getNumber(),
+                page.getSize(),
                 page.getContent()
         );
         return Result.success(result);
@@ -85,8 +85,8 @@ public class PurchaseController {
         Page<PurchaseOrder> page = orderService.page((long)pageNum, (long)pageSize, status);
         PageResult<PurchaseOrder> result = PageResult.of(
                 page.getTotalElements(),
-                (long)page.getNumber(),
-                (long)page.getSize(),
+                page.getNumber(),
+                page.getSize(),
                 page.getContent()
         );
         return Result.success(result);

@@ -32,8 +32,8 @@ public class AssetController {
         Page<Asset> page = assetService.page(pageNum, pageSize, keyword, categoryId, deptId, status);
         PageResult<Asset> result = PageResult.of(
                 page.getTotalElements(),
-                (long) page.getNumber(),
-                (long) page.getSize(),
+                page.getNumber(),
+                page.getSize(),
                 page.getContent()
         );
         return Result.success(result);

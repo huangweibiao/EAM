@@ -3,6 +3,7 @@ package com.eam.controller;
 import org.springframework.data.domain.Page;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
+import com.eam.entity.SparePart;
 import com.eam.entity.SysOperationLog;
 import com.eam.service.ISysOperationLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,13 @@ public class SysOperationLogController {
             @RequestParam(required = false) String module,
             @RequestParam(required = false) String operation) {
         Page<SysOperationLog> page = operationLogService.page(pageNum, pageSize, username, operation, module);
-        return Result.success(PageResult.of(page));
+        PageResult<SysOperationLog> result = PageResult.of(
+                page.getTotalElements(),
+                page.getNumber(),
+                page.getSize(),
+                page.getContent()
+        );
+        return Result.success(result);
     }
 
     /**

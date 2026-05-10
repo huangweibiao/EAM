@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 操作日志 Service实现
@@ -54,5 +55,27 @@ public class SysOperationLogServiceImpl implements ISysOperationLogService {
         };
 
         return operationLogRepository.findAll(spec, pageable);
+    }
+
+    @Override
+    public SysOperationLog getById(Long id) {
+        return operationLogRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public List<SysOperationLog> getByUserId(Long userId) {
+        return operationLogRepository.findByUserId(userId);
+    }
+
+    @Override
+    public boolean removeById(Long id) {
+        operationLogRepository.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public boolean removeByIds(List<Long> ids) {
+        operationLogRepository.deleteAllById(ids);
+        return true;
     }
 }

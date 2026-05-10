@@ -26,12 +26,12 @@ import java.util.Map;
 public class AuthController {
 
     private final ISysUserService sysUserService;
-    private final ISysRoleService sysRoleService;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
-    public AuthController(ISysUserService sysUserService, ISysRoleService sysRoleService) {
+    public AuthController(ISysUserService sysUserService, JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.sysUserService = sysUserService;
-        this.sysRoleService = sysRoleService;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     /**
