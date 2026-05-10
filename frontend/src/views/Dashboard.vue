@@ -60,10 +60,10 @@
             <h3>{{ userStore.userInfo?.nickname || '用户' }}</h3>
             <p>欢迎来到企业资产管理系统</p>
             <el-descriptions :column="2" border>
-              <el-descriptions-item label="用户名">{{ userStore.userInfo?.username }}</el-description>
-              <el-descriptions-item label="邮箱">{{ userStore.userInfo?.email }}</el-description>
-              <el-descriptions-item label="状态">{{ userStore.userInfo?.status === 1 ? '正常' : '禁用' }}</el-description>
-              <el-descriptions-item label="登录时间">{{ new Date().toLocaleString() }}</el-descriptions>
+              <el-descriptions-item label="用户名">{{ userStore.userInfo?.username }}</el-descriptions-item>
+              <el-descriptions-item label="邮箱">{{ userStore.userInfo?.email }}</el-descriptions-item>
+              <el-descriptions-item label="状态">{{ userStore.userInfo?.status === 1 ? '正常' : '禁用' }}</el-descriptions-item>
+              <el-descriptions-item label="登录时间">{{ new Date().toLocaleString() }}</el-descriptions-item>
             </el-descriptions>
           </div>
         </el-card>

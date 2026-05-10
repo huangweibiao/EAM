@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 用户角色关联 Entity
  */
 @Entity
-@Table(name = "sys_user_role")
+@Table(name = "eam_sys_user_role")
 public class SysUserRole {
 
     @Id

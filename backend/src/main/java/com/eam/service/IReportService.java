@@ -26,7 +26,20 @@ public interface IReportService {
     Map<String, Object> inventorySummary();
 
     /**
-     * 出入库统计
+     * 按月份分组统计入库出库量
+     * Task 13.2.1: 使用GROUP BY实现按月统计
      */
-    List<Map<String, Object>> inboundOutboundByMonth();
+    List<Map<String, Object>> inboundOutboundByGroupByMonth();
+
+    /**
+     * 按月份分组统计入库量
+     */
+    List<Map<String, Object>> inboundOutboundByGroupByMonth(@RequestParam String startDate,
+                                                      @RequestParam String endDate);
+
+    /**
+     * 按月份分组统计出库量
+     */
+    List<Map<String, Object>> inboundOutboundByGroupByMonth(@RequestParam String startDate,
+                                                      @RequestParam String endDate);
 }

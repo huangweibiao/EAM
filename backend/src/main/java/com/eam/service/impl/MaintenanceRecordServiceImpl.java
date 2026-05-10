@@ -1,8 +1,10 @@
 package com.eam.service.impl;
 
 import com.eam.common.BusinessException;
+import com.eam.entity.Asset;
 import com.eam.entity.MaintenanceRecord;
 import com.eam.repository.MaintenanceRecordRepository;
+import com.eam.service.IAssetService;
 import com.eam.service.IMaintenanceRecordService;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +29,11 @@ import java.util.stream.Collectors;
 public class MaintenanceRecordServiceImpl implements IMaintenanceRecordService {
 
     private final MaintenanceRecordRepository recordRepository;
+    private final IAssetService assetService;
 
-    public MaintenanceRecordServiceImpl(MaintenanceRecordRepository recordRepository) {
+    public MaintenanceRecordServiceImpl(MaintenanceRecordRepository recordRepository, IAssetService assetService) {
         this.recordRepository = recordRepository;
+        this.assetService = assetService;
     }
 
     @Override
@@ -54,7 +59,31 @@ public class MaintenanceRecordServiceImpl implements IMaintenanceRecordService {
         if (record.getMaintenanceDate() == null) {
             record.setMaintenanceDate(LocalDateTime.now());
         }
-        return recordRepository.save(record);
+        
+        // 保存维护记录
+        MaintenanceRecord savedRecord = recordRepository.save(record);
+        
+        // 获取关联资产并更新维护日期
+        try {
+            Asset asset = assetService.getById(record.getAssetId());
+            if (asset != null && asset.getMaintenanceCycle() != null && asset.getMaintenanceCycle() > 0) {
+                // 计算下次维护日期 = 当前维护日期 + 维护周期（天）
+                LocalDate lastMaintenanceDate = record.getMaintenanceDate().toLocalDate();
+                LocalDate nextMaintenanceDate = lastMaintenanceDate.plusDays(asset.getMaintenanceCycle());
+                
+                // 更新资产维护日期
+                assetService.updateMaintenanceDates(
+                    record.getAssetId(),
+                    lastMaintenanceDate,
+                    nextMaintenanceDate
+                );
+            }
+        } catch (Exception e) {
+            // 记录错误但不影响维护记录的保存
+            System.err.println("更新资产维护日期失败: " + e.getMessage());
+        }
+        
+        return savedRecord;
     }
 
     @Override

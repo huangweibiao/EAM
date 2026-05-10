@@ -3,12 +3,18 @@
 
 # Log files
 *.log
+*.log.*
 
 # Maven
 backend/target/
 backend/.mvn/
 backend/mvnw
 backend/mvnw.cmd
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/.settings
+backend/.classpath
+backend/.project
+backend/.factorypath
 
 # Node / NPM
 frontend/node_modules/
@@ -18,6 +24,12 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/pnpm-debug.log*
+frontend/.local
+frontend/.output
+
+# Backend static files (frontend build artifacts)
+backend/src/main/resources/static/
+backend/target/
 
 # IDE
 .comate/
@@ -26,12 +38,102 @@ frontend/pnpm-debug.log*
 *.iml
 *.iws
 *.ipr
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Application
+# Application specific
 application-local.yml
 application-dev.yml
 *.local
+application-prod.yml
+!application.yml
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+*.class
+target/
+build/
+out/
+
+# Test coverage
+coverage/
+.nyc_output/
+*.cover
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Package files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Generated files
+_generated/
+.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Lock files (optional - uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Docker
+.dockerignore
+
+# Kubernetes
+*.kubeconfig
+
+# CI/CD
+.github/workflows/*.log
+
+# Backup files
+*.backup
+*.old
+
+# Editor backups
+#*#
+.#*

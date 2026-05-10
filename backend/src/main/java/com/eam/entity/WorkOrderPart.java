@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 工单-备件关联 Entity
  */
 @Entity
-@Table(name = "work_order_part")
+@Table(name = "eam_work_order_part")
 public class WorkOrderPart {
 
     @Id

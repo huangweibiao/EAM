@@ -61,3 +61,31 @@ cache:
   dept-expire: 60
   # 分类缓存过期时间（分钟）
   category-expire: 120
+
+# Scheduled Job Configuration
+scheduled:
+  # 维护计划任务配置
+  maintenance:
+    job:
+      hour: 2
+      minute: 0
+      enabled: true
+  # 库存预警任务配置
+  stock-warning:
+    job:
+      interval: 3600
+      enabled: true
+
+# Scheduled Job Configuration
+scheduled:
+  # 维护计划任务配置
+  maintenance:
+    job:
+      hour: 2
+      minute: 0
+      enabled: true
+  # 库存预警任务配置
+  stock-warning:
+    job:
+      interval: 3600
+      enabled: true

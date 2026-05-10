@@ -59,6 +59,11 @@ public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecific
     List<Asset> findByUserId(Long userId);
 
     /**
+     * 根据资产编码前缀查询
+     */
+    List<Asset> findByAssetCodeStartingWith(String assetCodePrefix);
+
+    /**
      * 多条件查询
      */
     @Query("SELECT a FROM Asset a WHERE " +

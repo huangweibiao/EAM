@@ -28,6 +28,9 @@ public class SysRole {
 
     private Integer status;
 
+    @Column(name = "role_description")
+    private String roleDescription;
+
     private String remark;
 
     @Column(name = "create_time", updatable = false)
@@ -85,6 +88,14 @@ public class SysRole {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public String getRoleDescription() {
+        return roleDescription;
+    }
+
+    public void setRoleDescription(String roleDescription) {
+        this.roleDescription = roleDescription;
     }
 
     public String getRemark() {

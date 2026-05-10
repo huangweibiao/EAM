@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  * 系统用户 Entity
  */
 @Entity
-@Table(name = "sys_user")
+@Table(name = "eam_sys_user")
 public class SysUser {
 
     @Id
@@ -19,6 +19,9 @@ public class SysUser {
     private String password;
 
     private String nickname;
+
+    @Column(name = "real_name")
+    private String realName;
 
     private String email;
 
@@ -90,6 +93,14 @@ public class SysUser {
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public String getRealName() {
+        return realName;
+    }
+
+    public void setRealName(String realName) {
+        this.realName = realName;
     }
 
     public String getEmail() {

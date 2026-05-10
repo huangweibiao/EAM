@@ -1,11 +1,11 @@
 package com.eam.service.impl;
 
+import com.eam.annotation.OperationLog;
 import com.eam.common.BusinessException;
 import com.eam.entity.Asset;
-import com.eam.entity.AssetChangeLog;
-import com.eam.repository.AssetChangeLogRepository;
 import com.eam.repository.AssetRepository;
 import com.eam.service.IAssetService;
+import com.eam.util.QrCodeUtil;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -173,5 +173,132 @@ public class AssetServiceImpl implements IAssetService {
         asset.setNextMaintenanceDate(nextMaintenanceDate);
         assetRepository.save(asset);
         return true;
+    }
+
+    @Override
+    public boolean isValidStatusTransition(String currentStatus, String targetStatus) {
+        if (currentStatus == null || targetStatus == null) {
+            return false;
+        }
+
+        switch (currentStatus) {
+            case "NEW":
+                // NEW -> IN_USE 或 NEW -> MAINTENANCE
+                return "IN_USE".equals(targetStatus) || "MAINTENANCE".equals(targetStatus);
+            case "IN_USE":
+                // IN_USE -> MAINTENANCE 或 IN_USE -> SCRAP 或 IN_USE -> LOST
+                return "MAINTENANCE".equals(targetStatus) || "SCRAP".equals(targetStatus) || "LOST".equals(targetStatus);
+            case "MAINTENANCE":
+                // MAINTENANCE -> IN_USE
+                return "IN_USE".equals(targetStatus);
+            case "SCRAP":
+            case "LOST":
+                // SCRAP和LOST是最终状态，不能再转换
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * 生成资产二维码
+     * Task 10.2.1: 实现生成资产二维码方法
+     * Task 10.2.2: 二维码包含资产基本信息
+     */
+    @Override
+    @OperationLog(value = "生成资产二维码", description = "生成资产二维码", operationType = "READ", recordParams = true, recordResult = false)
+    public String generateAssetQrCode(Long assetId) {
+        try {
+            Asset asset = getById(assetId);
+            if (asset == null) {
+                throw new BusinessException("资产不存在");
+            }
+
+            // 生成二维码内容：EAM_ASSET:资产ID:资产编码:资产名称
+            String qrContent = QrCodeUtil.generateAssetQrCodeContent(
+                    asset.getId(),
+                    asset.getAssetCode(),
+                    asset.getAssetName()
+            );
+
+            // 生成二维码Base64字符串
+            String base64QrCode = QrCodeUtil.generateQrCodeToBase64(qrContent);
+            
+            // 更新资产的qr_code字段
+            updateAssetQrCode(assetId, qrContent);
+            
+            return base64QrCode;
+        } catch (Exception e) {
+            logger.error("生成资产二维码失败: {}", e.getMessage(), e);
+            throw new BusinessException("生成资产二维码失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 生成资产二维码图片
+     */
+    @Override
+    @OperationLog(value = "生成资产二维码图片", description = "生成资产二维码图片", operationType = "READ", recordParams = true, recordResult = false)
+    public String generateAssetQrCodeImage(Long assetId, int width, int height) {
+        try {
+            Asset asset = getById(assetId);
+            if (asset == null) {
+                throw new BusinessException("资产不存在");
+            }
+
+            // 生成二维码内容
+            String qrContent = QrCodeUtil.generateAssetQrCodeContent(
+                    asset.getId(),
+                    asset.getAssetCode(),
+                    asset.getAssetName()
+            );
+
+            // 生成二维码图片Base64字符串
+            String base64QrCode = QrCodeUtil.generateQrCodeToBase64(qrContent, width, height);
+            
+            // 更新资产的qr_code字段
+            updateAssetQrCode(assetId, qrContent);
+            
+            return base64QrCode;
+        } catch (Exception e) {
+            logger.error("生成资产二维码图片失败: {}", e.getMessage(), e);
+            throw new BusinessException("生成资产二维码图片失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新资产的二维码字段
+     * Task 10.2.3: 二维码文件存储管理
+     * Task 10.2.4: 更新资产qr_code字段
+     */
+    @Override
+    @Transactional
+    public boolean updateAssetQrCode(Long assetId, String qrCode) {
+        try {
+            Asset asset = getById(assetId);
+            if (asset == null) {
+                return false;
+            }
+
+            // 验证二维码内容是否为资产二维码
+            if (!QrCodeUtil.isAssetQrCode(qrCode)) {
+                throw new BusinessException("二维码内容格式错误");
+            }
+
+            // 更新资产的qr_code字段
+            asset.setQrCode(qrCode);
+            assetRepository.save(asset);
+            
+            logger.info("资产二维码已更新: 资产ID={}, 二维码内容={}", assetId, qrCode);
+            return true;
+        } catch (Exception e) {
+            logger.error("更新资产二维码失败: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    @Override
+    public List<Asset> listByCategory(Long categoryId) {
+        return assetRepository.findByCategoryId(categoryId);
     }
 }

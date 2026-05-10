@@ -7,6 +7,8 @@ import com.eam.entity.AssetTransfer;
 import com.eam.service.IAssetTransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import com.eam.security.RequirePermission;
+import com.eam.annotation.OperationLog;
 
 /**
  * 资产调拨 Controller
@@ -26,7 +28,7 @@ public class AssetTransferController {
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) String status) {
-        Page<AssetTransfer> page = assetTransferService.page((long)pageNum, (long)pageSize, status);
+        Page<AssetTransfer> page = assetTransferService.page(pageNum, pageSize, status);
         PageResult<AssetTransfer> result = PageResult.of(
                 page.getTotalElements(),
                 page.getNumber(),
@@ -72,17 +74,24 @@ public class AssetTransferController {
      * 审批调拨单
      */
     @PostMapping("/approve")
+    @RequirePermission("asset:transfer:approve")
+    @OperationLog(value = "审批资产调拨", description = "审批资产调拨申请", operationType = "UPDATE", recordParams = true, recordResult = true)
     public Result<AssetTransfer> approve(@RequestParam Long id,
-                                          @RequestParam String approver,
-                                          @RequestParam boolean approved) {
-        return Result.success(assetTransferService.approve(id, approver, approved));
+                                       @RequestParam String approver,
+                                       @RequestParam boolean approved,
+                                       @RequestParam(required = false) String remark) {
+        return Result.success(assetTransferService.approve(id, approver, approved, remark));
     }
 
     /**
-     * 完成调拨
+     * 完成调拨单
      */
     @PostMapping("/complete")
-    public Result<AssetTransfer> complete(@RequestParam Long id) {
-        return Result.success(assetTransferService.complete(id));
+    @RequirePermission("asset:transfer:complete")
+    @OperationLog(value = "完成资产调拨", description = "完成资产调拨流程", operationType = "UPDATE", recordParams = true, recordResult = true)
+    public Result<AssetTransfer> complete(@RequestParam Long id,
+                                       @RequestParam(required = false) String operator,
+                                       @RequestParam(required = false) String completeRemark) {
+        return Result.success(assetTransferService.complete(id, operator, completeRemark));
     }
 }

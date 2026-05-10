@@ -12,15 +12,25 @@ public interface IAssetTransferService {
 
     Page<AssetTransfer> page(Long pageNum, Long pageSize, String status);
 
-    AssetTransfer create(AssetTransfer transfer);
+    AssetTransfer add(AssetTransfer transfer);
 
-    AssetTransfer approve(Long id, String approver, boolean approved);
+    AssetTransfer update(AssetTransfer transfer);
 
-    AssetTransfer complete(Long id);
+    boolean delete(Long id);
 
     List<AssetTransfer> list();
 
     AssetTransfer getById(Long id);
 
     List<AssetTransfer> listPending();
+
+    List<AssetTransfer> listByAssetId(Long assetId);
+
+    List<AssetTransfer> listByStatus(String status);
+
+    Page<AssetTransfer> pageByAssetId(Long assetId, Long pageNum, Long pageSize);
+
+    AssetTransfer approve(Long id, String approver, boolean approved, String remark);
+
+    AssetTransfer complete(Long id, String operator, String completeRemark);
 }

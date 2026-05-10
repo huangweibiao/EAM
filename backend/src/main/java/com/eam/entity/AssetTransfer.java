@@ -45,9 +45,11 @@ public class AssetTransfer {
     @Column(name = "approve_time")
     private LocalDateTime approveTime;
 
-    private String status;
-
-    private String remark;
+    /**
+     * 调拨完成时间
+     */
+    @Column(name = "complete_time")
+    private LocalDateTime completeTime;
 
     @Column(name = "create_time", updatable = false)
     private LocalDateTime createTime;
@@ -131,8 +133,8 @@ public class AssetTransfer {
         this.transferTime = completeTime;
     }
 
-    public String getApprover() {
-        return approver;
+    public LocalDateTime getCompleteTime() {
+        return completeTime;
     }
 
     public void setApprover(String approver) {

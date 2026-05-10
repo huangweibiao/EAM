@@ -1,9 +1,9 @@
 package com.eam.controller;
 
 import org.springframework.data.domain.Page;
+import com.eam.security.RequirePermission;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
-import com.eam.entity.SparePart;
 import com.eam.entity.SysOperationLog;
 import com.eam.service.ISysOperationLogService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +23,7 @@ public class SysOperationLogController {
      * 分页查询操作日志
      */
     @GetMapping("/page")
+    @RequirePermission("system:log:list")
     public Result<PageResult<SysOperationLog>> page(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
@@ -43,6 +44,7 @@ public class SysOperationLogController {
      * 获取日志详情
      */
     @GetMapping("/{id}")
+    @RequirePermission("system:log:list")
     public Result<SysOperationLog> getById(@PathVariable Long id) {
         SysOperationLog log = operationLogService.getById(id);
         return Result.success(log);
@@ -52,6 +54,7 @@ public class SysOperationLogController {
      * 删除日志
      */
     @DeleteMapping("/{id}")
+    @RequirePermission("system:log:delete")
     public Result<Void> delete(@PathVariable Long id) {
         operationLogService.removeById(id);
         return Result.success();
@@ -61,6 +64,7 @@ public class SysOperationLogController {
      * 批量删除日志
      */
     @DeleteMapping("/batch")
+    @RequirePermission("system:log:delete")
     public Result<Void> deleteBatch(@RequestBody java.util.List<Long> ids) {
         operationLogService.removeByIds(ids);
         return Result.success();

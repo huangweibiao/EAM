@@ -10,15 +10,15 @@ USE eam;
 -- 1. 系统管理模块表
 -- ============================================
 
--- 1.1 部门表 (sys_department) - 统一表名
-DROP TABLE IF EXISTS `sys_role_permission`;
-DROP TABLE IF EXISTS `sys_permission`;
-DROP TABLE IF EXISTS `sys_user_role`;
-DROP TABLE IF EXISTS `sys_role`;
-DROP TABLE IF EXISTS `sys_user`;
-DROP TABLE IF EXISTS `sys_department`;
+-- 1.1 部门表 (eam_sys_department) - 统一表名
+DROP TABLE IF EXISTS `eam_sys_role_permission`;
+DROP TABLE IF EXISTS `eam_sys_permission`;
+DROP TABLE IF EXISTS `eam_sys_user_role`;
+DROP TABLE IF EXISTS `eam_sys_role`;
+DROP TABLE IF EXISTS `eam_sys_user`;
+DROP TABLE IF EXISTS `eam_sys_department`;
 
-CREATE TABLE `sys_department` (
+CREATE TABLE `eam_sys_department` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `parent_id` BIGINT DEFAULT 0 COMMENT '上级部门ID',
     `dept_code` VARCHAR(50) NOT NULL COMMENT '部门编码',
@@ -35,8 +35,8 @@ CREATE TABLE `sys_department` (
     KEY `idx_parent_id` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='部门表';
 
--- 1.2 用户表 (sys_user)
-CREATE TABLE `sys_user` (
+-- 1.2 用户表 (eam_sys_user)
+CREATE TABLE `eam_sys_user` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `username` VARCHAR(50) NOT NULL COMMENT '用户名(唯一)',
     `password` VARCHAR(255) NOT NULL COMMENT '密码(BCrypt加密)',
@@ -56,8 +56,8 @@ CREATE TABLE `sys_user` (
     KEY `idx_dept_id` (`dept_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
 
--- 1.3 角色表 (sys_role)
-CREATE TABLE `sys_role` (
+-- 1.3 角色表 (eam_sys_role)
+CREATE TABLE `eam_sys_role` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `role_code` VARCHAR(50) NOT NULL COMMENT '角色编码(唯一)',
     `role_name` VARCHAR(50) NOT NULL COMMENT '角色名称',
@@ -69,8 +69,8 @@ CREATE TABLE `sys_role` (
     UNIQUE KEY `uk_role_code` (`role_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色表';
 
--- 1.4 权限表 (sys_permission)
-CREATE TABLE `sys_permission` (
+-- 1.4 权限表 (eam_sys_permission)
+CREATE TABLE `eam_sys_permission` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `perm_code` VARCHAR(100) NOT NULL COMMENT '权限编码',
     `perm_name` VARCHAR(100) NOT NULL COMMENT '权限名称',
@@ -86,8 +86,8 @@ CREATE TABLE `sys_permission` (
     KEY `idx_parent_id` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='权限表';
 
--- 1.5 角色-权限关联表 (sys_role_permission)
-CREATE TABLE `sys_role_permission` (
+-- 1.5 角色-权限关联表 (eam_sys_role_permission)
+CREATE TABLE `eam_sys_role_permission` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `role_id` BIGINT NOT NULL COMMENT '角色ID',
     `perm_id` BIGINT NOT NULL COMMENT '权限ID',
@@ -98,16 +98,16 @@ CREATE TABLE `sys_role_permission` (
     KEY `idx_perm_id` (`perm_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色权限关联表';
 
--- 1.6 用户-角色关联表 (sys_user_role)
-CREATE TABLE `sys_user_role` (
+-- 1.6 用户-角色关联表 (eam_sys_user_role)
+CREATE TABLE `eam_sys_user_role` (
     `user_id` BIGINT NOT NULL COMMENT '用户ID',
     `role_id` BIGINT NOT NULL COMMENT '角色ID',
     PRIMARY KEY (`user_id`, `role_id`),
     KEY `idx_role_id` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色关联表';
 
--- 1.7 操作日志表 (sys_operation_log) - 新增
-CREATE TABLE `sys_operation_log` (
+-- 1.7 操作日志表 (eam_sys_operation_log) - 新增
+CREATE TABLE `eam_sys_operation_log` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `user_id` BIGINT DEFAULT NULL COMMENT '操作用户ID',
     `username` VARCHAR(50) DEFAULT NULL COMMENT '操作用户名',
@@ -130,12 +130,12 @@ CREATE TABLE `sys_operation_log` (
 -- 2. 资产管理模块表
 -- ============================================
 
--- 2.1 资产分类表 (asset_category)
-DROP TABLE IF EXISTS `asset_change_log`;
-DROP TABLE IF EXISTS `asset`;
-DROP TABLE IF EXISTS `asset_category`;
+-- 2.1 资产分类表 (eam_asset_category)
+DROP TABLE IF EXISTS `eam_asset_change_log`;
+DROP TABLE IF EXISTS `eam_asset`;
+DROP TABLE IF EXISTS `eam_asset_category`;
 
-CREATE TABLE `asset_category` (
+CREATE TABLE `eam_asset_category` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `parent_id` BIGINT DEFAULT 0 COMMENT '父分类ID',
     `category_code` VARCHAR(50) NOT NULL COMMENT '分类编码',
@@ -151,8 +151,8 @@ CREATE TABLE `asset_category` (
     KEY `idx_parent_id` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资产分类表';
 
--- 2.2 资产主表 (asset)
-CREATE TABLE `asset` (
+-- 2.2 资产主表 (eam_asset)
+CREATE TABLE `eam_asset` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `asset_code` VARCHAR(50) NOT NULL COMMENT '资产编码(唯一)',
     `asset_name` VARCHAR(200) NOT NULL COMMENT '资产名称',
@@ -185,8 +185,8 @@ CREATE TABLE `asset` (
     KEY `idx_next_maintenance_date` (`next_maintenance_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资产主表';
 
--- 2.3 资产变动记录表 (asset_change_log)
-CREATE TABLE `asset_change_log` (
+-- 2.3 资产变动记录表 (eam_asset_change_log)
+CREATE TABLE `eam_asset_change_log` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `asset_id` BIGINT NOT NULL COMMENT '资产ID',
     `change_type` VARCHAR(20) NOT NULL COMMENT '变动类型(DEPT/USER/STATUS/LOCATION/PRICE等)',
@@ -201,10 +201,10 @@ CREATE TABLE `asset_change_log` (
     KEY `idx_change_time` (`change_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资产变动记录表';
 
--- 2.4 资产调拨表 (asset_transfer)
-DROP TABLE IF EXISTS `asset_transfer`;
+-- 2.4 资产调拨表 (eam_asset_transfer)
+DROP TABLE IF EXISTS `eam_asset_transfer`;
 
-CREATE TABLE `asset_transfer` (
+CREATE TABLE `eam_asset_transfer` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `transfer_no` VARCHAR(50) NOT NULL COMMENT '调拨单号(唯一)',
     `asset_id` BIGINT NOT NULL COMMENT '资产ID',
@@ -217,6 +217,7 @@ CREATE TABLE `asset_transfer` (
     `operator` VARCHAR(50) NOT NULL COMMENT '操作人',
     `approver` VARCHAR(50) DEFAULT NULL COMMENT '审批人',
     `approve_time` DATETIME DEFAULT NULL COMMENT '审批时间',
+    `complete_time` DATETIME DEFAULT NULL COMMENT '调拨完成时间',
     `status` VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '状态(PENDING/APPROVED/REJECTED/COMPLETED)',
     `remark` VARCHAR(500) DEFAULT NULL COMMENT '备注',
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -227,11 +228,11 @@ CREATE TABLE `asset_transfer` (
     KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资产调拨表';
 
--- 2.5 资产盘点表 (asset_inventory)
-DROP TABLE IF EXISTS `asset_inventory_detail`;
-DROP TABLE IF EXISTS `asset_inventory`;
+-- 2.5 资产盘点表 (eam_asset_inventory)
+DROP TABLE IF EXISTS `eam_asset_inventory_detail`;
+DROP TABLE IF EXISTS `eam_asset_inventory`;
 
-CREATE TABLE `asset_inventory` (
+CREATE TABLE `eam_asset_inventory` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `inventory_no` VARCHAR(50) NOT NULL COMMENT '盘点单号(唯一)',
     `inventory_name` VARCHAR(200) NOT NULL COMMENT '盘点名称',
@@ -252,8 +253,8 @@ CREATE TABLE `asset_inventory` (
     KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='资产盘点表';
 
--- 2.6 资产盘点明细表 (asset_inventory_detail)
-CREATE TABLE `asset_inventory_detail` (
+-- 2.6 资产盘点明细表 (eam_asset_inventory_detail)
+CREATE TABLE `eam_asset_inventory_detail` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `inventory_id` BIGINT NOT NULL COMMENT '盘点单ID',
     `asset_id` BIGINT NOT NULL COMMENT '资产ID',
@@ -276,9 +277,9 @@ CREATE TABLE `asset_inventory_detail` (
 -- 3. 供应商模块表
 -- ============================================
 
-DROP TABLE IF EXISTS `supplier`;
+DROP TABLE IF EXISTS `eam_supplier`;
 
-CREATE TABLE `supplier` (
+CREATE TABLE `eam_supplier` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `supplier_code` VARCHAR(50) NOT NULL COMMENT '供应商编码(唯一)',
     `supplier_name` VARCHAR(200) NOT NULL COMMENT '供应商名称',
@@ -300,11 +301,11 @@ CREATE TABLE `supplier` (
 -- 4. 设备维护模块表
 -- ============================================
 
--- 4.1 维护计划表 (maintenance_plan)
-DROP TABLE IF EXISTS `maintenance_record`;
-DROP TABLE IF EXISTS `maintenance_plan`;
+-- 4.1 维护计划表 (eam_maintenance_plan)
+DROP TABLE IF EXISTS `eam_maintenance_record`;
+DROP TABLE IF EXISTS `eam_maintenance_plan`;
 
-CREATE TABLE `maintenance_plan` (
+CREATE TABLE `eam_maintenance_plan` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `plan_code` VARCHAR(50) NOT NULL COMMENT '计划编码(唯一)',
     `asset_id` BIGINT NOT NULL COMMENT '资产ID',
@@ -326,8 +327,8 @@ CREATE TABLE `maintenance_plan` (
     KEY `idx_next_execute_time` (`next_execute_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='维护计划表';
 
--- 4.2 维护执行记录表 (maintenance_record)
-CREATE TABLE `maintenance_record` (
+-- 4.2 维护执行记录表 (eam_maintenance_record)
+CREATE TABLE `eam_maintenance_record` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `plan_id` BIGINT DEFAULT NULL COMMENT '计划ID(可为空)',
     `asset_id` BIGINT NOT NULL COMMENT '资产ID',
@@ -354,10 +355,10 @@ CREATE TABLE `maintenance_record` (
 -- 5. 工单管理模块表
 -- ============================================
 
-DROP TABLE IF EXISTS `work_order_part`;
-DROP TABLE IF EXISTS `work_order`;
+DROP TABLE IF EXISTS `eam_work_order_part`;
+DROP TABLE IF EXISTS `eam_work_order`;
 
-CREATE TABLE `work_order` (
+CREATE TABLE `eam_work_order` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `order_no` VARCHAR(50) NOT NULL COMMENT '工单编号(唯一)',
     `asset_id` BIGINT NOT NULL COMMENT '资产ID',
@@ -389,13 +390,13 @@ CREATE TABLE `work_order` (
 -- 6. 备件库存模块表
 -- ============================================
 
--- 6.1 备件分类表 (spare_part_category)
-DROP TABLE IF EXISTS `part_outbound`;
-DROP TABLE IF EXISTS `part_inbound`;
-DROP TABLE IF EXISTS `spare_part`;
-DROP TABLE IF EXISTS `spare_part_category`;
+-- 6.1 备件分类表 (eam_spare_part_category)
+DROP TABLE IF EXISTS `eam_part_outbound`;
+DROP TABLE IF EXISTS `eam_part_inbound`;
+DROP TABLE IF EXISTS `eam_spare_part`;
+DROP TABLE IF EXISTS `eam_spare_part_category`;
 
-CREATE TABLE `spare_part_category` (
+CREATE TABLE `eam_spare_part_category` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `parent_id` BIGINT DEFAULT 0 COMMENT '父分类ID',
     `category_code` VARCHAR(50) NOT NULL COMMENT '分类编码',
@@ -409,8 +410,8 @@ CREATE TABLE `spare_part_category` (
     KEY `idx_parent_id` (`parent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='备件分类表';
 
--- 6.2 备件表 (spare_part)
-CREATE TABLE `spare_part` (
+-- 6.2 备件表 (eam_spare_part)
+CREATE TABLE `eam_spare_part` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `part_code` VARCHAR(50) NOT NULL COMMENT '备件编码(唯一)',
     `part_name` VARCHAR(200) NOT NULL COMMENT '备件名称',
@@ -432,8 +433,8 @@ CREATE TABLE `spare_part` (
     KEY `idx_category_id` (`category_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='备件表';
 
--- 6.3 备件入库记录表 (part_inbound)
-CREATE TABLE `part_inbound` (
+-- 6.3 备件入库记录表 (eam_part_inbound)
+CREATE TABLE `eam_part_inbound` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `inbound_no` VARCHAR(50) NOT NULL COMMENT '入库单号(唯一)',
     `part_id` BIGINT NOT NULL COMMENT '备件ID',
@@ -456,8 +457,8 @@ CREATE TABLE `part_inbound` (
     KEY `idx_part_id` (`part_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='备件入库记录表';
 
--- 6.4 备件出库记录表 (part_outbound)
-CREATE TABLE `part_outbound` (
+-- 6.4 备件出库记录表 (eam_part_outbound)
+CREATE TABLE `eam_part_outbound` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `outbound_no` VARCHAR(50) NOT NULL COMMENT '出库单号(唯一)',
     `part_id` BIGINT NOT NULL COMMENT '备件ID',
@@ -480,8 +481,8 @@ CREATE TABLE `part_outbound` (
     KEY `idx_work_order_id` (`work_order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='备件出库记录表';
 
--- 6.5 工单-备件关联表 (work_order_part)
-CREATE TABLE `work_order_part` (
+-- 6.5 工单-备件关联表 (eam_work_order_part)
+CREATE TABLE `eam_work_order_part` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `work_order_id` BIGINT NOT NULL COMMENT '工单ID',
     `part_id` BIGINT NOT NULL COMMENT '备件ID',
@@ -500,11 +501,11 @@ CREATE TABLE `work_order_part` (
 -- 7. 采购管理模块表
 -- ============================================
 
--- 7.1 采购申请表 (purchase_request)
-DROP TABLE IF EXISTS `purchase_order`;
-DROP TABLE IF EXISTS `purchase_request`;
+-- 7.1 采购申请表 (eam_purchase_request)
+DROP TABLE IF EXISTS `eam_purchase_order`;
+DROP TABLE IF EXISTS `eam_purchase_request`;
 
-CREATE TABLE `purchase_request` (
+CREATE TABLE `eam_purchase_request` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `request_no` VARCHAR(50) NOT NULL COMMENT '申请单号(唯一)',
     `part_id` BIGINT NOT NULL COMMENT '备件ID',
@@ -530,8 +531,8 @@ CREATE TABLE `purchase_request` (
     KEY `idx_approve_status` (`approve_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='采购申请表';
 
--- 7.2 采购订单表 (purchase_order)
-CREATE TABLE `purchase_order` (
+-- 7.2 采购订单表 (eam_purchase_order)
+CREATE TABLE `eam_purchase_order` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
     `order_no` VARCHAR(50) NOT NULL COMMENT '采购订单号(唯一)',
     `request_id` BIGINT DEFAULT NULL COMMENT '采购申请ID',
@@ -564,7 +565,7 @@ CREATE TABLE `purchase_order` (
 -- ============================================
 
 -- 8.1 默认部门数据
-INSERT INTO `sys_department` (`id`, `dept_code`, `dept_name`, `parent_id`, `sort_order`, `manager`, `status`) VALUES
+INSERT INTO `eam_sys_department` (`id`, `dept_code`, `dept_name`, `parent_id`, `sort_order`, `manager`, `status`) VALUES
 (1, 'ROOT', '总公司', 0, 1, 'admin', 1),
 (2, 'TECH', '技术部', 1, 1, 'tech_lead', 1),
 (3, 'FIN', '财务部', 1, 2, 'finance_lead', 1),
@@ -572,22 +573,22 @@ INSERT INTO `sys_department` (`id`, `dept_code`, `dept_name`, `parent_id`, `sort
 (5, 'OPS', '运维部', 1, 4, 'ops_lead', 1);
 
 -- 8.2 默认角色数据
-INSERT INTO `sys_role` (`id`, `role_code`, `role_name`, `status`, `remark`) VALUES
+INSERT INTO `eam_sys_role` (`id`, `role_code`, `role_name`, `status`, `remark`) VALUES
 (1, 'admin', '超级管理员', 1, '拥有所有权限'),
 (2, 'user', '普通用户', 1, '基本操作权限'),
 (3, 'asset_admin', '资产管理员', 1, '资产管理相关权限'),
 (4, 'maintainer', '维护人员', 1, '设备维护相关权限');
 
 -- 8.3 默认用户数据 (密码: admin123)
-INSERT INTO `sys_user` (`id`, `username`, `password`, `real_name`, `dept_id`, `role_id`, `email`, `phone`, `status`) VALUES
+INSERT INTO `eam_sys_user` (`id`, `username`, `password`, `real_name`, `dept_id`, `role_id`, `email`, `phone`, `status`) VALUES
 (1, 'admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EO', '系统管理员', 1, 1, 'admin@eam.com', '13800138000', 1);
 
 -- 8.4 用户角色关联
-INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES
+INSERT INTO `eam_sys_user_role` (`user_id`, `role_id`) VALUES
 (1, 1);
 
 -- 8.5 默认权限数据
-INSERT INTO `sys_permission` (`id`, `perm_code`, `perm_name`, `parent_id`, `perm_type`, `path`, `icon`, `sort_order`, `status`) VALUES
+INSERT INTO `eam_sys_permission` (`id`, `perm_code`, `perm_name`, `parent_id`, `perm_type`, `path`, `icon`, `sort_order`, `status`) VALUES
 -- 系统管理
 (1, 'system', '系统管理', 0, 'MENU', '/system', 'system', 1, 1),
 (2, 'system:user', '用户管理', 1, 'MENU', '/system/user', 'user', 1, 1),
@@ -618,11 +619,11 @@ INSERT INTO `sys_permission` (`id`, `perm_code`, `perm_name`, `parent_id`, `perm
 (52, 'purchase:order', '采购订单', 50, 'MENU', '/purchase/order', 'order', 2, 1);
 
 -- 8.6 角色权限关联 (给admin角色分配所有权限)
-INSERT INTO `sys_role_permission` (`role_id`, `perm_id`)
-SELECT 1, `id` FROM `sys_permission`;
+INSERT INTO `eam_sys_role_permission` (`role_id`, `perm_id`)
+SELECT 1, `id` FROM `eam_sys_permission`;
 
 -- 8.7 默认资产分类
-INSERT INTO `asset_category` (`id`, `category_code`, `category_name`, `parent_id`, `sort_order`, `status`, `depreciation_rate`, `useful_life`) VALUES
+INSERT INTO `eam_asset_category` (`id`, `category_code`, `category_name`, `parent_id`, `sort_order`, `status`, `depreciation_rate`, `useful_life`) VALUES
 (1, 'ELECTRONICS', '电子产品', 0, 1, 1, 20.00, 36),
 (2, 'OFFICE', '办公设备', 0, 2, 1, 15.00, 60),
 (3, 'FURNITURE', '家具', 0, 3, 1, 10.00, 120),
@@ -632,7 +633,7 @@ INSERT INTO `asset_category` (`id`, `category_code`, `category_name`, `parent_id
 (7, 'DESK_CHAIR', '桌椅', 3, 1, 1, 10.00, 120);
 
 -- 8.8 默认备件分类
-INSERT INTO `spare_part_category` (`id`, `category_code`, `category_name`, `parent_id`, `sort_order`, `status`) VALUES
+INSERT INTO `eam_spare_part_category` (`id`, `category_code`, `category_name`, `parent_id`, `sort_order`, `status`) VALUES
 (1, 'ELEC_PARTS', '电子配件', 0, 1, 1),
 (2, 'MECH_PARTS', '机械配件', 0, 2, 1),
 (3, 'CONSUMABLES', '耗材', 0, 3, 1);

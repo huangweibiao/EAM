@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 工单 Entity
  */
 @Entity
-@Table(name = "work_order")
+@Table(name = "eam_work_order")
 public class WorkOrder {
 
     @Id

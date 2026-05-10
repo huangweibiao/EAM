@@ -1,11 +1,16 @@
 package com.eam.service.impl;
 
 import com.eam.common.BusinessException;
+import com.eam.entity.PartInbound;
 import com.eam.entity.PurchaseOrder;
 import com.eam.entity.PurchaseRequest;
+import com.eam.repository.PartInboundRepository;
 import com.eam.repository.PurchaseOrderRepository;
 import com.eam.repository.PurchaseRequestRepository;
+import com.eam.service.IPartInboundService;
 import com.eam.service.IPurchaseOrderService;
+import com.eam.service.IPurchaseRequestService;
+import com.eam.service.ISparePartService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -30,12 +36,24 @@ public class PurchaseOrderServiceImpl implements IPurchaseOrderService {
 
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final PurchaseRequestRepository purchaseRequestRepository;
+    private final PartInboundRepository partInboundRepository;
+    private final IPartInboundService partInboundService;
+    private final ISparePartService sparePartService;
+    private final IPurchaseRequestService purchaseRequestService;
 
     @Autowired
     public PurchaseOrderServiceImpl(PurchaseOrderRepository purchaseOrderRepository,
-                                     PurchaseRequestRepository purchaseRequestRepository) {
+                                      PurchaseRequestRepository purchaseRequestRepository,
+                                      PartInboundRepository partInboundRepository,
+                                      IPartInboundService partInboundService,
+                                      ISparePartService sparePartService,
+                                      IPurchaseRequestService purchaseRequestService) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseRequestRepository = purchaseRequestRepository;
+        this.partInboundRepository = partInboundRepository;
+        this.partInboundService = partInboundService;
+        this.sparePartService = sparePartService;
+        this.purchaseRequestService = purchaseRequestService;
     }
 
     @Override
@@ -66,7 +84,7 @@ public class PurchaseOrderServiceImpl implements IPurchaseOrderService {
                 }
             }
         }
-
+        
         String orderNo = "PO" + System.currentTimeMillis();
         order.setOrderNo(orderNo);
         if (order.getOrderDate() == null) {
@@ -85,13 +103,73 @@ public class PurchaseOrderServiceImpl implements IPurchaseOrderService {
     }
 
     @Override
+    @Transactional
     public PurchaseOrder receive(Long id) {
         PurchaseOrder order = purchaseOrderRepository.findById(id).orElse(null);
         if (order == null) {
             throw new BusinessException("采购订单不存在");
         }
-        order.setStatus("RECEIVED");
+        
+        // 验证订单状态和收货条件
+        if (!"APPROVED".equals(order.getStatus())) {
+            throw new BusinessException("只有已审批的采购订单可以收货");
+        }
+        if ("RECEIVED".equals(order.getStatus())) {
+            throw new BusinessException("该订单已经收货，不能重复收货");
+        }
+
+        // 创建PartInbound记录
+        PartInbound inbound = new PartInbound();
+        inbound.setPartId(order.getPartId());
+        inbound.setPurchaseOrderId(order.getId());
+        inbound.setQuantity(order.getOrderQuantity());
+        inbound.setUnitPrice(order.getUnitPrice());
+        
+        // 计算总金额
+        if (order.getTotalAmount() != null) {
+            inbound.setTotalAmount(order.getTotalAmount());
+        } else {
+            inbound.setTotalAmount(order.getOrderQuantity().multiply(order.getUnitPrice()));
+        }
+        
+        // 设置入库日期和供应商信息
+        inbound.setInboundDate(LocalDateTime.now());
+        if (order.getSupplierId() != null) {
+            inbound.setSupplierId(order.getSupplierId());
+        }
+        
+        // 保存入库记录
+        PartInbound savedInbound = partInboundRepository.save(inbound);
+        
+        // 更新备件库存数量
+        if (order.getPartId() != null && order.getOrderQuantity() != null) {
+            try {
+                sparePartService.updateQuantity(order.getPartId(), order.getOrderQuantity());
+            } catch (Exception e) {
+                // 库存更新异常，不影响订单收货流程
+                System.err.println("更新备件库存失败: " + e.getMessage());
+            }
+        }
+        
+        // 更新采购申请状态
+        if (order.getRequestId() != null) {
+            try {
+                purchaseRequestService.approve(
+                    order.getRequestId(),
+                    order.getOperator() != null ? order.getOperator() : "system",
+                    true,
+                    "采购订单已收货"
+                );
+            } catch (Exception e) {
+                // 采购申请状态更新异常，不影响订单收货流程
+                System.err.println("更新采购申请状态失败: " + e.getMessage());
+            }
+        }
+        
+        // 更新订单状态
         order.setActualDeliveryDate(LocalDate.now());
+        order.setStatus("RECEIVED");
+        
         return purchaseOrderRepository.save(order);
     }
 
