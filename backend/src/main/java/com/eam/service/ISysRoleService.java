@@ -1,17 +1,16 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.SysRole;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 /**
  * 系统角色 Service 接口
  */
-public interface ISysRoleService extends IService<SysRole> {
+public interface ISysRoleService {
 
-    IPage<SysRole> page(Long pageNum, Long pageSize, String roleName);
+    Page<SysRole> page(Long pageNum, Long pageSize, String roleName);
 
     SysRole add(SysRole role);
 
@@ -20,6 +19,8 @@ public interface ISysRoleService extends IService<SysRole> {
     boolean delete(Long id);
 
     List<SysRole> listAll();
+
+    SysRole getById(Long id);
 
     boolean assignPermissions(Long roleId, List<Long> permIds);
 }

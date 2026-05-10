@@ -1,6 +1,6 @@
 package com.eam.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.data.domain.Page;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
 import com.eam.entity.SysUser;
@@ -27,12 +27,12 @@ public class SysUserController {
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) String username,
             @RequestParam(required = false) Integer status) {
-        IPage<SysUser> page = sysUserService.page(pageNum, pageSize, username, status);
+        Page<SysUser> page = sysUserService.page(pageNum, pageSize, username, status);
         PageResult<SysUser> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }

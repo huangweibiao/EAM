@@ -1,8 +1,7 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.MaintenanceRecord;
+import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -11,9 +10,9 @@ import java.util.Map;
 /**
  * 维护记录 Service 接口
  */
-public interface IMaintenanceRecordService extends IService<MaintenanceRecord> {
+public interface IMaintenanceRecordService {
 
-    IPage<MaintenanceRecord> page(Long pageNum, Long pageSize, Long assetId, String maintenanceType);
+    Page<MaintenanceRecord> page(Long pageNum, Long pageSize, Long assetId, String maintenanceType);
 
     MaintenanceRecord add(MaintenanceRecord record);
 

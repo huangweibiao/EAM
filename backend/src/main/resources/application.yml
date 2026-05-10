@@ -48,20 +48,6 @@ spring:
             user-info-uri: http://localhost:9000/oauth2/userinfo
             user-name-attribute: username
 
-# MyBatis Plus Configuration
-mybatis-plus:
-  configuration:
-    map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      id-type: auto
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
-  mapper-locations: classpath*:/mapper/**/*.xml
-  type-aliases-package: com.eam.entity
-
   # Redis Configuration
   data:
     redis:

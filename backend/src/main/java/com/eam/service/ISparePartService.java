@@ -1,17 +1,16 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.SparePart;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 /**
  * 备件 Service 接口
  */
-public interface ISparePartService extends IService<SparePart> {
+public interface ISparePartService {
 
-    IPage<SparePart> page(Long pageNum, Long pageSize, String keyword, Long categoryId, String status);
+    Page<SparePart> page(Long pageNum, Long pageSize, String keyword, Long categoryId, String status);
 
     SparePart add(SparePart sparePart);
 
@@ -20,6 +19,8 @@ public interface ISparePartService extends IService<SparePart> {
     boolean delete(Long id);
 
     List<SparePart> listAll();
+
+    SparePart getById(Long id);
 
     List<SparePart> listWarning();
 

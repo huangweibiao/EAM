@@ -1,11 +1,11 @@
 package com.eam.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
 import com.eam.entity.Asset;
 import com.eam.service.IAssetService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,12 +29,12 @@ public class AssetController {
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long deptId,
             @RequestParam(required = false) String status) {
-        IPage<Asset> page = assetService.page(pageNum, pageSize, keyword, categoryId, deptId, status);
+        Page<Asset> page = assetService.page(pageNum, pageSize, keyword, categoryId, deptId, status);
         PageResult<Asset> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }

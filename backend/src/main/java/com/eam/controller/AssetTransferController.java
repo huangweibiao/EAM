@@ -1,6 +1,6 @@
 package com.eam.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.data.domain.Page;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
 import com.eam.entity.AssetTransfer;
@@ -26,12 +26,12 @@ public class AssetTransferController {
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) String status) {
-        IPage<AssetTransfer> page = assetTransferService.page(pageNum, pageSize, status);
+        Page<AssetTransfer> page = assetTransferService.page(pageNum, pageSize, status);
         PageResult<AssetTransfer> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }

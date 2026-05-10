@@ -1,13 +1,13 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.eam.entity.SysDepartment;
-import com.eam.mapper.SysDepartmentMapper;
+import com.eam.repository.SysDepartmentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,8 +21,14 @@ import java.util.List;
 @CacheConfig(cacheNames = "sys:dept")
 public class CachedSysDepartmentServiceImpl {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CachedSysDepartmentServiceImpl.class);
+
+    private final SysDepartmentRepository departmentRepository;
+
     @Autowired
-    private SysDepartmentMapper departmentMapper;
+    public CachedSysDepartmentServiceImpl(SysDepartmentRepository departmentRepository) {
+        this.departmentRepository = departmentRepository;
+    }
 
     /**
      * 获取所有部门（带缓存）
@@ -31,8 +37,7 @@ public class CachedSysDepartmentServiceImpl {
     @Cacheable(key = "'list:all'")
     public List<SysDepartment> listAll() {
         log.debug("从数据库获取所有部门列表");
-        return departmentMapper.selectList(new LambdaQueryWrapper<SysDepartment>()
-                .orderByAsc(SysDepartment::getSortOrder));
+        return departmentRepository.findAll(Sort.by(Sort.Direction.ASC, "sortOrder"));
     }
 
     /**
@@ -41,7 +46,7 @@ public class CachedSysDepartmentServiceImpl {
     @Cacheable(key = "'id:' + #id")
     public SysDepartment getById(Long id) {
         log.debug("从数据库获取部门: {}", id);
-        return departmentMapper.selectById(id);
+        return departmentRepository.findById(id).orElse(null);
     }
 
     /**

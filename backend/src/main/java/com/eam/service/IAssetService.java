@@ -1,17 +1,16 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.Asset;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 /**
  * 资产 Service 接口
  */
-public interface IAssetService extends IService<Asset> {
+public interface IAssetService {
 
-    IPage<Asset> page(Long pageNum, Long pageSize, String keyword, Long categoryId, Long deptId, String status);
+    Page<Asset> page(Long pageNum, Long pageSize, String keyword, Long categoryId, Long deptId, String status);
 
     Asset add(Asset asset);
 
@@ -20,6 +19,8 @@ public interface IAssetService extends IService<Asset> {
     boolean delete(Long id);
 
     List<Asset> listAll();
+
+    Asset getById(Long id);
 
     /**
      * 资产变动

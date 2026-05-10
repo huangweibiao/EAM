@@ -1,18 +1,17 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.AssetInventory;
 import com.eam.entity.AssetInventoryDetail;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 /**
  * 资产盘点 Service 接口
  */
-public interface IAssetInventoryService extends IService<AssetInventory> {
+public interface IAssetInventoryService {
 
-    IPage<AssetInventory> page(Long pageNum, Long pageSize, String status);
+    Page<AssetInventory> page(Long pageNum, Long pageSize, String status);
 
     AssetInventory create(AssetInventory inventory);
 
@@ -23,4 +22,8 @@ public interface IAssetInventoryService extends IService<AssetInventory> {
     boolean addDetail(AssetInventoryDetail detail);
 
     boolean updateDetail(AssetInventoryDetail detail);
+
+    List<AssetInventory> list();
+
+    AssetInventory getById(Long id);
 }

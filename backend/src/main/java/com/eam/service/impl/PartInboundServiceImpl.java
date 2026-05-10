@@ -1,36 +1,52 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.entity.PartInbound;
-import com.eam.mapper.PartInboundMapper;
+import com.eam.repository.PartInboundRepository;
 import com.eam.service.IPartInboundService;
 import com.eam.service.ISparePartService;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 /**
  * 备件入库 Service 实现类
  */
 @Service
-public class PartInboundServiceImpl extends ServiceImplImpl<PartInboundMapper, PartInbound> implements IPartInboundService {
+public class PartInboundServiceImpl implements IPartInboundService {
+
+    private final PartInboundRepository partInboundRepository;
+    private final ISparePartService sparePartService;
 
     @Autowired
-    private ISparePartService sparePartService;
+    public PartInboundServiceImpl(PartInboundRepository partInboundRepository,
+                                   ISparePartService sparePartService) {
+        this.partInboundRepository = partInboundRepository;
+        this.sparePartService = sparePartService;
+    }
 
     @Override
-    public IPagePage<PartInbound> page(Long pageNum, Long pageSize, Long partId) {
-        Page Page<PartInbound> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapperWrapper<PartInbound> wrapper = new LambdaQueryWrapper<>();
-        if (partId != null) {
-            wrapper.eq(PartInbound::getPartId, partId);
-        }
-        wrapper.orderByDesc(PartInbound::getInboundDate);
-        return this.page(page, wrapper);
+    public Page<PartInbound> page(Long pageNum, Long pageSize, Long partId) {
+        // JPA 分页从 0 开始，MyBatis-Plus 从 1 开始，需要转换
+        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
+                Sort.by(Sort.Direction.DESC, "inboundDate"));
+
+        Specification<PartInbound> spec = (root, query, cb) -> {
+            ArrayList<Predicate> predicates = new ArrayList<>();
+            if (partId != null) {
+                predicates.add(cb.equal(root.get("partId"), partId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return partInboundRepository.findAll(spec, pageable);
     }
 
     @Override
@@ -45,7 +61,7 @@ public class PartInboundServiceImpl extends ServiceImplImpl<PartInboundMapper, P
             inbound.setTotalAmount(inbound.getQuantity().multiply(inbound.getUnitPrice()));
         }
 
-        this.save(inbound);
+        partInboundRepository.save(inbound);
 
         // 更新备件库存（入库后增加库存）
         sparePartService.updateQuantity(inbound.getPartId(), inbound.getQuantity());

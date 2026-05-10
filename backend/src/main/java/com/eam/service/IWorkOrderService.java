@@ -1,15 +1,16 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.WorkOrder;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 /**
  * 工单 Service 接口
  */
-public interface IWorkOrderService extends IService<WorkOrder> {
+public interface IWorkOrderService {
 
-    IPage<WorkOrder> page(Long pageNum, Long pageSize, String keyword, String status, String orderType);
+    Page<WorkOrder> page(Long pageNum, Long pageSize, String keyword, String status, String orderType);
 
     WorkOrder create(WorkOrder workOrder);
 
@@ -20,6 +21,10 @@ public interface IWorkOrderService extends IService<WorkOrder> {
     WorkOrder complete(Long id, String solution);
 
     WorkOrder close(Long id);
+
+    WorkOrder getById(Long id);
+
+    List<WorkOrder> list();
 
     WorkOrder rate(Long id, Integer rating);
 }

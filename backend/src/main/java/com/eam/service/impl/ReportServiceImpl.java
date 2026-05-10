@@ -1,16 +1,15 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.eam.entity.Asset;
 import com.eam.entity.MaintenanceRecord;
 import com.eam.entity.PartInbound;
 import com.eam.entity.PartOutbound;
 import com.eam.entity.SparePart;
-import com.eam.mapper.AssetMapper;
-import com.eam.mapper.MaintenanceRecordMapper;
-import com.eam.mapper.PartInboundMapper;
-import com.eam.mapper.PartOutboundMapper;
-import com.eam.mapper.SparePartMapper;
+import com.eam.repository.AssetRepository;
+import com.eam.repository.MaintenanceRecordRepository;
+import com.eam.repository.PartInboundRepository;
+import com.eam.repository.PartOutboundRepository;
+import com.eam.repository.SparePartRepository;
 import com.eam.service.IReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,24 +24,28 @@ import java.util.stream.Collectors;
 @Service
 public class ReportServiceImpl implements IReportService {
 
-    @Autowired
-    private AssetMapper assetMapper;
+    private final AssetRepository assetRepository;
+    private final SparePartRepository sparePartRepository;
+    private final MaintenanceRecordRepository maintenanceRecordRepository;
+    private final PartInboundRepository inboundRepository;
+    private final PartOutboundRepository outboundRepository;
 
     @Autowired
-    private SparePartMapper sparePartMapper;
-
-    @Autowired
-    private MaintenanceRecordMapper maintenanceRecordMapper;
-
-    @Autowired
-    private PartInboundMapper inboundMapper;
-
-    @Autowired
-    private PartOutboundMapper outboundMapper;
+    public ReportServiceImpl(AssetRepository assetRepository,
+                             SparePartRepository sparePartRepository,
+                             MaintenanceRecordRepository maintenanceRecordRepository,
+                             PartInboundRepository inboundRepository,
+                             PartOutboundRepository outboundRepository) {
+        this.assetRepository = assetRepository;
+        this.sparePartRepository = sparePartRepository;
+        this.maintenanceRecordRepository = maintenanceRecordRepository;
+        this.inboundRepository = inboundRepository;
+        this.outboundRepository = outboundRepository;
+    }
 
     @Override
     public List<Map<String, Object>> assetSummaryByDept() {
-        List<Asset> assets = assetMapper.selectList(null);
+        List<Asset> assets = assetRepository.findAll();
         return assets.stream()
                 .collect(Collectors.groupingBy(a -> a.getDeptId() != null ? a.getDeptId().toString() : "未知"))
                 .entrySet().stream()
@@ -60,7 +63,7 @@ public class ReportServiceImpl implements IReportService {
 
     @Override
     public List<Map<String, Object>> assetSummaryByCategory() {
-        List<Asset> assets = assetMapper.selectList(null);
+        List<Asset> assets = assetRepository.findAll();
         return assets.stream()
                 .collect(Collectors.groupingBy(a -> a.getCategoryId() != null ? a.getCategoryId().toString() : "未知"))
                 .entrySet().stream()
@@ -78,7 +81,7 @@ public class ReportServiceImpl implements IReportService {
 
     @Override
     public List<Map<String, Object>> maintenanceCostByMonth() {
-        List<MaintenanceRecord> records = maintenanceRecordMapper.selectList(null);
+        List<MaintenanceRecord> records = maintenanceRecordRepository.findAll();
         return records.stream()
                 .collect(Collectors.groupingBy(r -> {
                     if (r.getMaintenanceDate() != null) {
@@ -102,7 +105,7 @@ public class ReportServiceImpl implements IReportService {
 
     @Override
     public Map<String, Object> inventorySummary() {
-        List<SparePart> parts = sparePartMapper.selectList(null);
+        List<SparePart> parts = sparePartRepository.findAll();
         BigDecimal totalValue = parts.stream()
                 .map(p -> {
                     if (p.getQuantity() != null && p.getUnitPrice() != null) {
@@ -122,8 +125,8 @@ public class ReportServiceImpl implements IReportService {
 
     @Override
     public List<Map<String, Object>> inboundOutboundByMonth() {
-        List<PartInbound> inbounds = inboundMapper.selectList(null);
-        List<PartOutbound> outbounds = outboundMapper.selectList(null);
+        List<PartInbound> inbounds = inboundRepository.findAll();
+        List<PartOutbound> outbounds = outboundRepository.findAll();
 
         // 简化实现：返回前6个月的数据
         List<Map<String, Object>> result = new ArrayList<>();

@@ -1,15 +1,16 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.SysUser;
+import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 /**
  * 系统用户 Service 接口
  */
-public interface SysUserService extends IService<SysUser> {
+public interface ISysUserService {
 
-    IPage<SysUser> page(Long pageNum, Long pageSize, String username, Integer status);
+    Page<SysUser> page(Long pageNum, Long pageSize, String username, Integer status);
 
     SysUser add(SysUser user);
 
@@ -18,6 +19,10 @@ public interface SysUserService extends IService<SysUser> {
     boolean delete(Long id);
 
     boolean resetPassword(Long id);
+
+    SysUser getById(Long id);
+
+    List<SysUser> list();
 
     SysUser getByUsername(String username);
 }

@@ -1,6 +1,6 @@
 package com.eam.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.data.domain.Page;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
 import com.eam.entity.PurchaseOrder;
@@ -35,8 +35,8 @@ public class PurchaseController {
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) String status) {
-        IPage<PurchaseRequest> page = requestService.page(pageNum, pageSize, status);
-        return Result.success(PageResult.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()));
+        Page<PurchaseRequest> page = requestService.page(pageNum, pageSize, status);
+        return Result.success(PageResult.of(page.getTotalElements(), page.getNumber(), page.getSize(), page.getContent()));
     }
 
     @GetMapping("/request/list")
@@ -67,8 +67,8 @@ public class PurchaseController {
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) String status) {
-        IPage<PurchaseOrder> page = orderService.page(pageNum, pageSize, status);
-        return Result.success(PageResult.of(page.getTotal(), page.getCurrent(), page.getSize(), page.getRecords()));
+        Page<PurchaseOrder> page = orderService.page(pageNum, pageSize, status);
+        return Result.success(PageResult.of(page.getTotalElements(), page.getNumber(), page.getSize(), page.getContent()));
     }
 
     @GetMapping("/order/list")

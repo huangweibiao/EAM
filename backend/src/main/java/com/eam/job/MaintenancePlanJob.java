@@ -1,9 +1,8 @@
 package com.eam.job;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.eam.entity.MaintenancePlan;
 import com.eam.entity.WorkOrder;
-import com.eam.mapper.MaintenancePlanMapper;
+import com.eam.repository.MaintenancePlanRepository;
 import com.eam.service.IWorkOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
@@ -24,7 +23,7 @@ import java.util.List;
 public class MaintenancePlanJob implements Job {
 
     @Autowired
-    private MaintenancePlanMapper maintenancePlanMapper;
+    private MaintenancePlanRepository maintenancePlanRepository;
 
     @Autowired
     private IWorkOrderService workOrderService;
@@ -35,11 +34,7 @@ public class MaintenancePlanJob implements Job {
 
         // 查询所有活跃的、下次执行时间已到的维护计划
         LocalDateTime now = LocalDateTime.now();
-        List List<MaintenancePlan> plans = maintenancePlanMapper.selectList(
-                new LambdaQueryWrapperWrapper<MaintenancePlan>()
-                        .eq(MaintenancePlan::getStatus, "ACTIVE")
-                        .le(MaintenancePlan::getNextExecuteTime, now)
-        );
+        List<MaintenancePlan> plans = maintenancePlanRepository.findExpiringPlans("ACTIVE", now);
 
         log.info("找到 {} 个到期的维护计划", plans.size());
 

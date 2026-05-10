@@ -1,14 +1,14 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
 import com.eam.entity.AssetCategory;
-import com.eam.mapper.AssetCategoryMapper;
+import com.eam.repository.AssetCategoryRepository;
 import com.eam.service.IAssetCategoryService;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,11 +16,17 @@ import java.util.stream.Collectors;
  * 资产分类 Service 实现类
  */
 @Service
-public class AssetCategoryServiceImpl extends ServiceImpl<AssetCategoryMapper, AssetCategory> implements IAssetCategoryService {
+public class AssetCategoryServiceImpl implements IAssetCategoryService {
+
+    private final AssetCategoryRepository assetCategoryRepository;
+
+    public AssetCategoryServiceImpl(AssetCategoryRepository assetCategoryRepository) {
+        this.assetCategoryRepository = assetCategoryRepository;
+    }
 
     @Override
     public List<AssetCategory> tree() {
-        List<AssetCategory> allCategories = this.list();
+        List<AssetCategory> allCategories = assetCategoryRepository.findAll();
         return buildTree(allCategories, 0L);
     }
 
@@ -34,14 +40,14 @@ public class AssetCategoryServiceImpl extends ServiceImpl<AssetCategoryMapper, A
     @Override
     public AssetCategory add(AssetCategory category) {
         if (StringUtils.hasText(category.getCategoryCode())) {
-            Long count = this.count(new LambdaQueryWrapper<AssetCategory>()
-                    .eq(AssetCategory::getCategoryCode, category.getCategoryCode()));
+            Specification<AssetCategory> spec = (root, query, cb) ->
+                    cb.equal(root.get("categoryCode"), category.getCategoryCode());
+            long count = assetCategoryRepository.count(spec);
             if (count > 0) {
                 throw new BusinessException("分类编码已存在");
             }
         }
-        this.save(category);
-        return category;
+        return assetCategoryRepository.save(category);
     }
 
     @Override
@@ -49,18 +55,29 @@ public class AssetCategoryServiceImpl extends ServiceImpl<AssetCategoryMapper, A
         if (category.getId() == null) {
             throw new BusinessException("分类ID不能为空");
         }
-        this.updateById(category);
-        return category;
+        return assetCategoryRepository.save(category);
     }
 
     @Override
     public boolean delete(Long id) {
         // 检查是否有子分类
-        Long count = this.count(new LambdaQueryWrapper<AssetCategory>()
-                .eq(AssetCategory::getParentId, id));
+        Specification<AssetCategory> spec = (root, query, cb) ->
+                cb.equal(root.get("parentId"), id);
+        long count = assetCategoryRepository.count(spec);
         if (count > 0) {
             throw new BusinessException("请先删除子分类");
         }
-        return this.removeById(id);
+        assetCategoryRepository.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public List<AssetCategory> list() {
+        return assetCategoryRepository.findAll();
+    }
+
+    @Override
+    public AssetCategory getById(Long id) {
+        return assetCategoryRepository.findById(id).orElse(null);
     }
 }

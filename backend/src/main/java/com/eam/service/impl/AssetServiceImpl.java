@@ -1,60 +1,73 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
 import com.eam.entity.Asset;
 import com.eam.entity.AssetChangeLog;
-import com.eam.mapper.AssetChangeLogMapper;
-import com.eam.mapper.AssetMapper;
+import com.eam.repository.AssetChangeLogRepository;
+import com.eam.repository.AssetRepository;
 import com.eam.service.IAssetService;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 资产 Service 实现类
  */
 @Service
-public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements IAssetService {
+public class AssetServiceImpl implements IAssetService {
 
-    private final AssetChangeLogMapper changeLogMapper;
+    private final AssetRepository assetRepository;
+    private final AssetChangeLogRepository changeLogRepository;
 
-    public AssetServiceImpl(AssetChangeLogMapper changeLogMapper) {
-        this.changeLogMapper = changeLogMapper;
+    public AssetServiceImpl(AssetRepository assetRepository, AssetChangeLogRepository changeLogRepository) {
+        this.assetRepository = assetRepository;
+        this.changeLogRepository = changeLogRepository;
     }
 
     @Override
-    public IPage<Asset> page(Long pageNum, Long pageSize, String keyword, Long categoryId, Long deptId, String status) {
-        Page<Asset> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<Asset> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(keyword)) {
-            wrapper.and(w -> w.like(Asset::getAssetCode, keyword)
-                    .or().like(Asset::getAssetName, keyword));
-        }
-        if (categoryId != null) {
-            wrapper.eq(Asset::getCategoryId, categoryId);
-        }
-        if (deptId != null) {
-            wrapper.eq(Asset::getDeptId, deptId);
-        }
-        if (StringUtils.hasText(status)) {
-            wrapper.eq(Asset::getStatus, status);
-        }
-        wrapper.orderByDesc(Asset::getCreateTime);
-        return this.page(page, wrapper);
+    public Page<Asset> page(Long pageNum, Long pageSize, String keyword, Long categoryId, Long deptId, String status) {
+        // JPA 分页从 0 开始，MyBatis-Plus 从 1 开始，需要转换
+        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
+                Sort.by(Sort.Direction.DESC, "createTime"));
+
+        Specification<Asset> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (StringUtils.hasText(keyword)) {
+                predicates.add(cb.or(
+                        cb.like(root.get("assetCode"), "%" + keyword + "%"),
+                        cb.like(root.get("assetName"), "%" + keyword + "%")
+                ));
+            }
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("categoryId"), categoryId));
+            }
+            if (deptId != null) {
+                predicates.add(cb.equal(root.get("deptId"), deptId));
+            }
+            if (StringUtils.hasText(status)) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return assetRepository.findAll(spec, pageable);
     }
 
     @Override
     public Asset add(Asset asset) {
         // 检查资产编码是否存在
-        Long count = this.count(new LambdaQueryWrapper<Asset>()
-                .eq(Asset::getAssetCode, asset.getAssetCode()));
-        if (count > 0) {
+        if (assetRepository.existsByAssetCode(asset.getAssetCode())) {
             throw new BusinessException("资产编码已存在");
         }
         // 校验资产净值不能大于购买原值
@@ -65,8 +78,7 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
         if (asset.getStatus() == null) {
             asset.setStatus("NEW");
         }
-        this.save(asset);
-        return asset;
+        return assetRepository.save(asset);
     }
 
     @Override
@@ -79,30 +91,33 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
                 && asset.getCurrentValue().compareTo(asset.getPurchasePrice()) > 0) {
             throw new BusinessException("资产净值不能大于购买原值");
         }
-        this.updateById(asset);
-        return asset;
+        return assetRepository.save(asset);
     }
 
     @Override
     public boolean delete(Long id) {
-        Asset asset = this.getById(id);
+        Asset asset = assetRepository.findById(id).orElse(null);
         if (asset != null && "IN_USE".equals(asset.getStatus())) {
             throw new BusinessException("使用中的资产不能删除");
         }
-        return this.removeById(id);
+        assetRepository.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public Asset getById(Long id) {
+        return assetRepository.findById(id).orElse(null);
     }
 
     @Override
     public List<Asset> listAll() {
-        return this.list();
+        return assetRepository.findAll();
     }
 
     @Override
     public boolean change(Long assetId, String changeType, String newValue, String reason, String operator) {
-        Asset asset = this.getById(assetId);
-        if (asset == null) {
-            throw new BusinessException("资产不存在");
-        }
+        Asset asset = assetRepository.findById(assetId)
+                .orElseThrow(() -> new BusinessException("资产不存在"));
 
         // 记录旧值
         String oldValue = "";
@@ -128,7 +143,7 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
         }
 
         // 更新资产
-        this.updateById(asset);
+        assetRepository.save(asset);
 
         // 记录变动日志
         AssetChangeLog log = new AssetChangeLog();
@@ -139,7 +154,7 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
         log.setReason(reason);
         log.setChangeTime(LocalDateTime.now());
         log.setOperator(operator);
-        changeLogMapper.insert(log);
+        changeLogRepository.save(log);
 
         return true;
     }
@@ -152,12 +167,11 @@ public class AssetServiceImpl extends ServiceImpl<AssetMapper, Asset> implements
 
     @Override
     public boolean updateMaintenanceDates(Long assetId, java.time.LocalDate lastMaintenanceDate, java.time.LocalDate nextMaintenanceDate) {
-        Asset asset = this.getById(assetId);
-        if (asset == null) {
-            throw new BusinessException("资产不存在");
-        }
+        Asset asset = assetRepository.findById(assetId)
+                .orElseThrow(() -> new BusinessException("资产不存在"));
         asset.setLastMaintenanceDate(lastMaintenanceDate);
         asset.setNextMaintenanceDate(nextMaintenanceDate);
-        return this.updateById(asset);
+        assetRepository.save(asset);
+        return true;
     }
 }

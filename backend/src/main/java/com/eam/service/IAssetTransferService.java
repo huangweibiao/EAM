@@ -1,17 +1,16 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.AssetTransfer;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
 /**
  * 资产调拨 Service 接口
  */
-public interface IAssetTransferService extends IService<AssetTransfer> {
+public interface IAssetTransferService {
 
-    IPage<AssetTransfer> page(Long pageNum, Long pageSize, String status);
+    Page<AssetTransfer> page(Long pageNum, Long pageSize, String status);
 
     AssetTransfer create(AssetTransfer transfer);
 

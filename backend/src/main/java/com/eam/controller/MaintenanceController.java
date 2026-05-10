@@ -1,6 +1,6 @@
 package com.eam.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.data.domain.Page;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
 import com.eam.entity.MaintenancePlan;
@@ -37,12 +37,12 @@ public class MaintenanceController {
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) Long assetId,
             @RequestParam(required = false) String status) {
-        IPage<MaintenancePlan> page = planService.page(pageNum, pageSize, assetId, status);
+        Page<MaintenancePlan> page = planService.page(pageNum, pageSize, assetId, status);
         PageResult<MaintenancePlan> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }
@@ -114,12 +114,12 @@ public class MaintenanceController {
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) Long assetId,
             @RequestParam(required = false) String maintenanceType) {
-        IPage<MaintenanceRecord> page = recordService.page(pageNum, pageSize, assetId, maintenanceType);
+        Page<MaintenanceRecord> page = recordService.page(pageNum, pageSize, assetId, maintenanceType);
         PageResult<MaintenanceRecord> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }

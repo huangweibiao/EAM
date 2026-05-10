@@ -2,8 +2,8 @@ package com.eam.controller;
 
 import com.eam.common.Result;
 import com.eam.dto.LoginResponse;
-import com.eam.entity.User;
-import com.eam.service.UserService;
+import com.eam.entity.SysUser;
+import com.eam.service.ISysUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserService userService;
+    private final ISysUserService sysUserService;
 
     /**
      * Get current user info
@@ -29,7 +29,7 @@ public class AuthController {
     public Result<LoginResponse.UserInfo> getCurrentUser(Authentication authentication) {
         String username = authentication.getName();
 
-        User user = userService.getUserByUsername(username);
+        SysUser user = sysUserService.getByUsername(username);
 
         LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo(
                 user.getId(),

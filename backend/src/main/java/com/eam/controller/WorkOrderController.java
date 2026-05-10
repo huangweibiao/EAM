@@ -1,6 +1,6 @@
 package com.eam.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.data.domain.Page;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
 import com.eam.entity.WorkOrder;
@@ -28,12 +28,12 @@ public class WorkOrderController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String orderType) {
-        IPage<WorkOrder> page = workOrderService.page(pageNum, pageSize, keyword, status, orderType);
+        Page<WorkOrder> page = workOrderService.page(pageNum, pageSize, keyword, status, orderType);
         PageResult<WorkOrder> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }

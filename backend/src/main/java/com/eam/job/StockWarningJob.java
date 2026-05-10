@@ -2,7 +2,8 @@ package com.eam.job;
 
 import com.eam.entity.SparePart;
 import com.eam.service.ISparePartService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -15,9 +16,10 @@ import java.util.List;
  * 库存预警定时任务
  * 定期检查备件库存，低于预警值时发送通知
  */
-@Slf4j
 @Component
 public class StockWarningJob implements Job {
+
+    private static final Logger log = LoggerFactory.getLogger(StockWarningJob.class);
 
     @Autowired
     private ISparePartService sparePartService;
@@ -27,7 +29,7 @@ public class StockWarningJob implements Job {
         log.info("开始执行库存预警定时任务...");
 
         // 获取所有库存预警的备件
-        List List<SparePart> warningParts = sparePartService.listWarning();
+        List<SparePart> warningParts = sparePartService.listWarning();
 
         log.info("找到 {} 个库存预警的备件", warningParts.size());
 

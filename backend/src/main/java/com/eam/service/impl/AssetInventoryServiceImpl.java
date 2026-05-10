@@ -1,45 +1,61 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
 import com.eam.entity.Asset;
 import com.eam.entity.AssetInventory;
 import com.eam.entity.AssetInventoryDetail;
-import com.eam.mapper.AssetInventoryDetailMapper;
-import com.eam.mapper.AssetInventoryMapper;
+import com.eam.repository.AssetInventoryDetailRepository;
+import com.eam.repository.AssetInventoryRepository;
 import com.eam.service.IAssetInventoryService;
 import com.eam.service.IAssetService;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 资产盘点 Service 实现类
  */
 @Service
-public class AssetInventoryServiceImpl extends ServiceImpl<AssetInventoryMapper, AssetInventory> implements IAssetInventoryService {
+public class AssetInventoryServiceImpl implements IAssetInventoryService {
+
+    private final AssetInventoryRepository inventoryRepository;
+    private final AssetInventoryDetailRepository detailRepository;
+    private final IAssetService assetService;
 
     @Autowired
-    private AssetInventoryDetailMapper detailMapper;
-
-    @Autowired
-    private IAssetService assetService;
+    public AssetInventoryServiceImpl(AssetInventoryRepository inventoryRepository,
+                                      AssetInventoryDetailRepository detailRepository,
+                                      IAssetService assetService) {
+        this.inventoryRepository = inventoryRepository;
+        this.detailRepository = detailRepository;
+        this.assetService = assetService;
+    }
 
     @Override
-    public IPage<AssetInventory> page(Long pageNum, Long pageSize, String status) {
-        Page<AssetInventory> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<AssetInventory> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(status)) {
-            wrapper.eq(AssetInventory::getStatus, status);
-        }
-        wrapper.orderByDesc(AssetInventory::getCreateTime);
-        return this.page(page, wrapper);
+    public Page<AssetInventory> page(Long pageNum, Long pageSize, String status) {
+        // JPA 分页从 0 开始，MyBatis-Plus 从 1 开始，需要转换
+        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
+                Sort.by(Sort.Direction.DESC, "createTime"));
+
+        Specification<AssetInventory> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StringUtils.hasText(status)) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return inventoryRepository.findAll(spec, pageable);
     }
 
     @Override
@@ -55,18 +71,18 @@ public class AssetInventoryServiceImpl extends ServiceImpl<AssetInventoryMapper,
         }
 
         // 统计应盘点资产数量
-        Long assetCount = assetService.count();
+        List<Asset> allAssets = assetService.listAll();
+        Long assetCount = (long) allAssets.size();
         inventory.setTotalAssetCount(assetCount.intValue());
         inventory.setActualCount(0);
         inventory.setMismatchCount(0);
 
-        this.save(inventory);
-        return inventory;
+        return inventoryRepository.save(inventory);
     }
 
     @Override
     public AssetInventory complete(Long id) {
-        AssetInventory inventory = this.getById(id);
+        AssetInventory inventory = inventoryRepository.findById(id).orElse(null);
         if (inventory == null) {
             throw new BusinessException("盘点单不存在");
         }
@@ -75,9 +91,7 @@ public class AssetInventoryServiceImpl extends ServiceImpl<AssetInventoryMapper,
         }
 
         // 统计实际盘点数量和差异
-        List<AssetInventoryDetail> details = detailMapper.selectList(
-                new LambdaQueryWrapper<AssetInventoryDetail>()
-                        .eq(AssetInventoryDetail::getInventoryId, id));
+        List<AssetInventoryDetail> details = detailRepository.findByInventoryId(id);
 
         int actualCount = 0;
         int mismatchCount = 0;
@@ -94,16 +108,12 @@ public class AssetInventoryServiceImpl extends ServiceImpl<AssetInventoryMapper,
         inventory.setMismatchCount(mismatchCount);
         inventory.setEndTime(LocalDateTime.now());
         inventory.setStatus("COMPLETED");
-        this.updateById(inventory);
-
-        return inventory;
+        return inventoryRepository.save(inventory);
     }
 
     @Override
     public List<AssetInventoryDetail> getDetails(Long inventoryId) {
-        return detailMapper.selectList(
-                new LambdaQueryWrapper<AssetInventoryDetail>()
-                        .eq(AssetInventoryDetail::getInventoryId, inventoryId));
+        return detailRepository.findByInventoryId(inventoryId);
     }
 
     @Override
@@ -117,11 +127,23 @@ public class AssetInventoryServiceImpl extends ServiceImpl<AssetInventoryMapper,
                 throw new BusinessException("盘点存在差异时，必须填写差异说明");
             }
         }
-        return detailMapper.insert(detail) > 0;
+        detailRepository.save(detail);
+        return true;
+    }
+
+    @Override
+    public List<AssetInventory> list() {
+        return inventoryRepository.findAll();
+    }
+
+    @Override
+    public AssetInventory getById(Long id) {
+        return inventoryRepository.findById(id).orElse(null);
     }
 
     @Override
     public boolean updateDetail(AssetInventoryDetail detail) {
-        return detailMapper.updateById(detail) > 0;
+        detailRepository.save(detail);
+        return true;
     }
 }

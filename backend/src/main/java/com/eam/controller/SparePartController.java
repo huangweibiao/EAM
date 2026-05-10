@@ -1,6 +1,6 @@
 package com.eam.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.data.domain.Page;
 import com.eam.common.PageResult;
 import com.eam.common.Result;
 import com.eam.entity.PartInbound;
@@ -40,12 +40,12 @@ public class SparePartController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String status) {
-        IPage<SparePart> page = sparePartService.page(pageNum, pageSize, keyword, categoryId, status);
+        Page<SparePart> page = sparePartService.page(pageNum, pageSize, keyword, categoryId, status);
         PageResult<SparePart> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }
@@ -108,12 +108,12 @@ public class SparePartController {
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) Long partId) {
-        IPage<PartInbound> page = inboundService.page(pageNum, pageSize, partId);
+        Page<PartInbound> page = inboundService.page(pageNum, pageSize, partId);
         PageResult<PartInbound> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }
@@ -136,12 +136,12 @@ public class SparePartController {
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize,
             @RequestParam(required = false) Long partId) {
-        IPage<PartOutbound> page = outboundService.page(pageNum, pageSize, partId);
+        Page<PartOutbound> page = outboundService.page(pageNum, pageSize, partId);
         PageResult<PartOutbound> result = PageResult.of(
-                page.getTotal(),
-                page.getCurrent(),
+                page.getTotalElements(),
+                page.getNumber(),
                 page.getSize(),
-                page.getRecords()
+                page.getContent()
         );
         return Result.success(result);
     }

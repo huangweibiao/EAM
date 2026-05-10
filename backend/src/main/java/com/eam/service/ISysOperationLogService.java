@@ -1,13 +1,12 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.SysOperationLog;
+import org.springframework.data.domain.Page;
 
 /**
  * 操作日志 Service接口
  */
-public interface ISysOperationLogService extends IServiceService<SysOperationLog> {
+public interface ISysOperationLogService {
 
     /**
      * 记录操作日志
@@ -26,5 +25,5 @@ public interface ISysOperationLogService extends IServiceService<SysOperationLog
      * @param module 操作模块
      * @return 分页结果
      */
-    IPagePage<SysOperationLog> page(Integer pageNum, Integer pageSize, String username, String operation, String module);
+    Page<SysOperationLog> page(Integer pageNum, Integer pageSize, String username, String operation, String module);
 }

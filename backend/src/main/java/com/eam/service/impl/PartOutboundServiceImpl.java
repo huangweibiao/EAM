@@ -1,44 +1,60 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
 import com.eam.entity.PartOutbound;
 import com.eam.entity.PurchaseRequest;
 import com.eam.entity.SparePart;
-import com.eam.mapper.PartOutboundMapper;
+import com.eam.repository.PartOutboundRepository;
 import com.eam.service.IPartOutboundService;
 import com.eam.service.IPurchaseRequestService;
 import com.eam.service.ISparePartService;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 /**
  * 备件出库 Service 实现类
  */
 @Service
-public class PartOutboundServiceImpl extends ServiceImplImpl<PartOutboundMapper, PartOutbound> implements IPartOutboundService {
+public class PartOutboundServiceImpl implements IPartOutboundService {
+
+    private final PartOutboundRepository partOutboundRepository;
+    private final ISparePartService sparePartService;
+    private final IPurchaseRequestService purchaseRequestService;
 
     @Autowired
-    private ISparePartService sparePartService;
-
-    @Autowired
-    private IPurchaseRequestService purchaseRequestService;
+    public PartOutboundServiceImpl(PartOutboundRepository partOutboundRepository,
+                                    ISparePartService sparePartService,
+                                    IPurchaseRequestService purchaseRequestService) {
+        this.partOutboundRepository = partOutboundRepository;
+        this.sparePartService = sparePartService;
+        this.purchaseRequestService = purchaseRequestService;
+    }
 
     @Override
-    public IPagePage<PartOutbound> page(Long pageNum, Long pageSize, Long partId) {
-        Page Page<PartOutbound> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapperWrapper<PartOutbound> wrapper = new LambdaQueryWrapper<>();
-        if (partId != null) {
-            wrapper.eq(PartOutbound::getPartId, partId);
-        }
-        wrapper.orderByDesc(PartOutbound::getOutboundDate);
-        return this.page(page, wrapper);
+    public Page<PartOutbound> page(Long pageNum, Long pageSize, Long partId) {
+        // JPA 分页从 0 开始，MyBatis-Plus 从 1 开始，需要转换
+        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
+                Sort.by(Sort.Direction.DESC, "outboundDate"));
+
+        Specification<PartOutbound> spec = (root, query, cb) -> {
+            ArrayList<Predicate> predicates = new ArrayList<>();
+            if (partId != null) {
+                predicates.add(cb.equal(root.get("partId"), partId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return partOutboundRepository.findAll(spec, pageable);
     }
 
     @Override
@@ -62,7 +78,7 @@ public class PartOutboundServiceImpl extends ServiceImplImpl<PartOutboundMapper,
             throw new BusinessException("库存不足，当前库存：" + sparePart.getQuantity() + "，出库数量：" + outbound.getQuantity());
         }
 
-        this.save(outbound);
+        partOutboundRepository.save(outbound);
 
         // 扣减库存(出库后减少库存)
         sparePartService.updateQuantity(outbound.getPartId(), outbound.getQuantity().negate());
@@ -116,7 +132,7 @@ public class PartOutboundServiceImpl extends ServiceImplImpl<PartOutboundMapper,
             request.setApproveStatus("PENDING");
             request.setStatus("ACTIVE");
 
-            purchaseRequestService.save(request);
+            purchaseRequestService.add(request);
         }
     }
 }

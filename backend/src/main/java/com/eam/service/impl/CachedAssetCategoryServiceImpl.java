@@ -1,13 +1,13 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.eam.entity.AssetCategory;
-import com.eam.mapper.AssetCategoryMapper;
+import com.eam.repository.AssetCategoryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,8 +21,14 @@ import java.util.List;
 @CacheConfig(cacheNames = "asset:category")
 public class CachedAssetCategoryServiceImpl {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CachedAssetCategoryServiceImpl.class);
+
+    private final AssetCategoryRepository categoryRepository;
+
     @Autowired
-    private AssetCategoryMapper categoryMapper;
+    public CachedAssetCategoryServiceImpl(AssetCategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
 
     /**
      * 获取所有资产分类（带缓存）
@@ -31,8 +37,7 @@ public class CachedAssetCategoryServiceImpl {
     @Cacheable(key = "'list:all'")
     public List<AssetCategory> listAll() {
         log.debug("从数据库获取所有资产分类列表");
-        return categoryMapper.selectList(new LambdaQueryWrapper<AssetCategory>()
-                .orderByAsc(AssetCategory::getSortOrder));
+        return categoryRepository.findAll(Sort.by(Sort.Direction.ASC, "sortOrder"));
     }
 
     /**
@@ -41,9 +46,8 @@ public class CachedAssetCategoryServiceImpl {
     @Cacheable(key = "'tree'")
     public List<AssetCategory> getTree() {
         log.debug("从数据库获取资产分类树");
-        List<AssetCategory> allCategories = categoryMapper.selectList(
-                new LambdaQueryWrapper<AssetCategory>()
-                        .orderByAsc(AssetCategory::getSortOrder));
+        List<AssetCategory> allCategories = categoryRepository.findAll(
+                Sort.by(Sort.Direction.ASC, "sortOrder"));
         // 构建树结构
         return buildTree(allCategories);
     }
@@ -54,7 +58,7 @@ public class CachedAssetCategoryServiceImpl {
     @Cacheable(key = "'id:' + #id")
     public AssetCategory getById(Long id) {
         log.debug("从数据库获取资产分类: {}", id);
-        return categoryMapper.selectById(id);
+        return categoryRepository.findById(id).orElse(null);
     }
 
     /**

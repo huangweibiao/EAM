@@ -1,45 +1,61 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
 import com.eam.entity.Asset;
 import com.eam.entity.AssetChangeLog;
 import com.eam.entity.AssetTransfer;
-import com.eam.mapper.AssetChangeLogMapper;
-import com.eam.mapper.AssetTransferMapper;
+import com.eam.repository.AssetChangeLogRepository;
+import com.eam.repository.AssetTransferRepository;
 import com.eam.service.IAssetTransferService;
 import com.eam.service.IAssetService;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 资产调拨 Service 实现类
  */
 @Service
-public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, AssetTransfer> implements IAssetTransferService {
+public class AssetTransferServiceImpl implements IAssetTransferService {
+
+    private final AssetTransferRepository transferRepository;
+    private final AssetChangeLogRepository changeLogRepository;
+    private final IAssetService assetService;
 
     @Autowired
-    private IAssetService assetService;
-
-    @Autowired
-    private AssetChangeLogMapper changeLogMapper;
+    public AssetTransferServiceImpl(AssetTransferRepository transferRepository,
+                                     AssetChangeLogRepository changeLogRepository,
+                                     IAssetService assetService) {
+        this.transferRepository = transferRepository;
+        this.changeLogRepository = changeLogRepository;
+        this.assetService = assetService;
+    }
 
     @Override
-    public IPage<AssetTransfer> page(Long pageNum, Long pageSize, String status) {
-        Page<AssetTransfer> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<AssetTransfer> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(status)) {
-            wrapper.eq(AssetTransfer::getStatus, status);
-        }
-        wrapper.orderByDesc(AssetTransfer::getCreateTime);
-        return this.page(page, wrapper);
+    public Page<AssetTransfer> page(Long pageNum, Long pageSize, String status) {
+        // JPA 分页从 0 开始，MyBatis-Plus 从 1 开始，需要转换
+        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
+                Sort.by(Sort.Direction.DESC, "createTime"));
+
+        Specification<AssetTransfer> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (StringUtils.hasText(status)) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return transferRepository.findAll(spec, pageable);
     }
 
     @Override
@@ -60,13 +76,12 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
             throw new BusinessException("资产不存在");
         }
 
-        this.save(transfer);
-        return transfer;
+        return transferRepository.save(transfer);
     }
 
     @Override
     public AssetTransfer approve(Long id, String approver, boolean approved) {
-        AssetTransfer transfer = this.getById(id);
+        AssetTransfer transfer = transferRepository.findById(id).orElse(null);
         if (transfer == null) {
             throw new BusinessException("调拨单不存在");
         }
@@ -77,7 +92,7 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
         transfer.setApprover(approver);
         transfer.setApproveTime(LocalDateTime.now());
         transfer.setStatus(approved ? "APPROVED" : "REJECTED");
-        this.updateById(transfer);
+        transferRepository.save(transfer);
 
         // 如果审批通过，自动完成调拨（更新资产信息）
         if (approved) {
@@ -89,7 +104,7 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
 
     @Override
     public AssetTransfer complete(Long id) {
-        AssetTransfer transfer = this.getById(id);
+        AssetTransfer transfer = transferRepository.findById(id).orElse(null);
         if (transfer == null) {
             throw new BusinessException("调拨单不存在");
         }
@@ -111,7 +126,7 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
         if (transfer.getToUserId() != null) {
             asset.setUserId(transfer.getToUserId());
         }
-        assetService.updateById(asset);
+        assetService.update(asset);
 
         // 生成资产变动记录 - 部门变动
         AssetChangeLog deptLog = new AssetChangeLog();
@@ -122,7 +137,7 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
         deptLog.setReason("资产调拨: " + transfer.getTransferReason());
         deptLog.setChangeTime(LocalDateTime.now());
         deptLog.setOperator(transfer.getOperator());
-        changeLogMapper.insert(deptLog);
+        changeLogRepository.save(deptLog);
 
         // 如果使用人也变更了，生成使用人变动记录
         if (transfer.getToUserId() != null && !transfer.getToUserId().equals(oldUserId)) {
@@ -134,18 +149,15 @@ public class AssetTransferServiceImpl extends ServiceImpl<AssetTransferMapper, A
             userLog.setReason("资产调拨: " + transfer.getTransferReason());
             userLog.setChangeTime(LocalDateTime.now());
             userLog.setOperator(transfer.getOperator());
-            changeLogMapper.insert(userLog);
+            changeLogRepository.save(userLog);
         }
 
         transfer.setStatus("COMPLETED");
-        this.updateById(transfer);
-        return transfer;
+        return transferRepository.save(transfer);
     }
 
     @Override
     public List<AssetTransfer> listPending() {
-        return this.list(new LambdaQueryWrapper<AssetTransfer>()
-                .eq(AssetTransfer::getStatus, "PENDING")
-                .orderByDesc(AssetTransfer::getCreateTime));
+        return transferRepository.findByStatusOrderByCreateTimeDesc("PENDING");
     }
 }

@@ -1,37 +1,54 @@
 package com.eam.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.eam.common.BusinessException;
 import com.eam.entity.MaintenancePlan;
-import com.eam.mapper.MaintenancePlanMapper;
+import com.eam.repository.MaintenancePlanRepository;
 import com.eam.service.IMaintenancePlanService;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 维护计划 Service 实现类
  */
 @Service
-public class MaintenancePlanServiceImpl extends ServiceImpl<MaintenancePlanMapper, MaintenancePlan> implements IMaintenancePlanService {
+public class MaintenancePlanServiceImpl implements IMaintenancePlanService {
+
+    private final MaintenancePlanRepository maintenancePlanRepository;
+
+    public MaintenancePlanServiceImpl(MaintenancePlanRepository maintenancePlanRepository) {
+        this.maintenancePlanRepository = maintenancePlanRepository;
+    }
 
     @Override
-    public IPage<MaintenancePlan> page(Long pageNum, Long pageSize, Long assetId, String status) {
-        Page<MaintenancePlan> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<MaintenancePlan> wrapper = new LambdaQueryWrapper<>();
-        if (assetId != null) {
-            wrapper.eq(MaintenancePlan::getAssetId, assetId);
-        }
-        if (StringUtils.hasText(status)) {
-            wrapper.eq(MaintenancePlan::getStatus, status);
-        }
-        wrapper.orderByDesc(MaintenancePlan::getCreateTime);
-        return this.page(page, wrapper);
+    public Page<MaintenancePlan> page(Long pageNum, Long pageSize, Long assetId, String status) {
+        // JPA 分页从 0 开始，MyBatis-Plus 从 1 开始，需要转换
+        Pageable pageable = PageRequest.of(pageNum.intValue() - 1, pageSize.intValue(),
+                Sort.by(Sort.Direction.DESC, "createTime"));
+
+        Specification<MaintenancePlan> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (assetId != null) {
+                predicates.add(cb.equal(root.get("assetId"), assetId));
+            }
+            if (StringUtils.hasText(status)) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return maintenancePlanRepository.findAll(spec, pageable);
     }
 
     @Override
@@ -49,8 +66,7 @@ public class MaintenancePlanServiceImpl extends ServiceImpl<MaintenancePlanMappe
         // 计算下次执行时间
         calculateNextExecuteTime(plan);
 
-        this.save(plan);
-        return plan;
+        return maintenancePlanRepository.save(plan);
     }
 
     @Override
@@ -60,29 +76,24 @@ public class MaintenancePlanServiceImpl extends ServiceImpl<MaintenancePlanMappe
         }
         // 重新计算下次执行时间
         calculateNextExecuteTime(plan);
-        this.updateById(plan);
-        return plan;
+        return maintenancePlanRepository.save(plan);
     }
 
     @Override
     public boolean delete(Long id) {
-        return this.removeById(id);
+        maintenancePlanRepository.deleteById(id);
+        return true;
     }
 
     @Override
     public List<MaintenancePlan> listPending() {
-        return this.list(new LambdaQueryWrapper<MaintenancePlan>()
-                .eq(MaintenancePlan::getStatus, "ACTIVE")
-                .orderByAsc(MaintenancePlan::getNextExecuteTime));
+        return maintenancePlanRepository.findByStatusOrderByNextExecuteTimeAsc("ACTIVE");
     }
 
     @Override
     public List<MaintenancePlan> listExpiring(int days) {
         LocalDateTime expiringDate = LocalDateTime.now().plusDays(days);
-        return this.list(new LambdaQueryWrapper<MaintenancePlan>()
-                .eq(MaintenancePlan::getStatus, "ACTIVE")
-                .le(MaintenancePlan::getNextExecuteTime, expiringDate)
-                .orderByAsc(MaintenancePlan::getNextExecuteTime));
+        return maintenancePlanRepository.findExpiringPlans("ACTIVE", expiringDate);
     }
 
     private void calculateNextExecuteTime(MaintenancePlan plan) {

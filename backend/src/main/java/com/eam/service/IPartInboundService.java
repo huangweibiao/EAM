@@ -1,15 +1,14 @@
 package com.eam.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.eam.entity.PartInbound;
+import org.springframework.data.domain.Page;
 
 /**
  * 备件入库 Service 接口
  */
-public interface IPartInboundService extends IServiceService<PartInbound> {
+public interface IPartInboundService {
 
-    IPagePage<PartInbound> page(Long pageNum, Long pageSize, Long partId);
+    Page<PartInbound> page(Long pageNum, Long pageSize, Long partId);
 
     PartInbound add(PartInbound inbound);
 }
